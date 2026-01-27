@@ -152,7 +152,7 @@ authRouter.post('/register', async (c) => {
   setCookie(c, 'session', sessionId, {
     httpOnly: true,
     secure: c.env.ENVIRONMENT !== 'development',
-    sameSite: 'Lax',
+    sameSite: c.env.ENVIRONMENT === 'development' ? 'Lax' : 'None',
     path: '/',
     maxAge: SESSION_DURATION_MS / 1000,
     ...(c.env.COOKIE_DOMAIN && { domain: c.env.COOKIE_DOMAIN }),
@@ -199,7 +199,7 @@ authRouter.post('/login', async (c) => {
   setCookie(c, 'session', sessionId, {
     httpOnly: true,
     secure: c.env.ENVIRONMENT !== 'development',
-    sameSite: 'Lax',
+    sameSite: c.env.ENVIRONMENT === 'development' ? 'Lax' : 'None',
     path: '/',
     maxAge: SESSION_DURATION_MS / 1000,
     ...(c.env.COOKIE_DOMAIN && { domain: c.env.COOKIE_DOMAIN }),
