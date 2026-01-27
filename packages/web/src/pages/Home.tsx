@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useProjects, useAuth } from '../hooks';
 import { ProjectList, ProjectForm } from '../components/project';
+import { getApiBaseUrl } from '../config';
 
 export function Home() {
   const navigate = useNavigate();
@@ -9,10 +10,41 @@ export function Home() {
   const { projects, loading, error, fetchProjects, createProject, createAnonymousProject, deleteProject } = useProjects();
   const [showForm, setShowForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [endpointCounts, setEndpointCounts] = useState<Record<string, number>>({});
+
+  // Fetch endpoint counts for all projects
+  const fetchEndpointCounts = useCallback(async (projectIds: string[]) => {
+    const counts: Record<string, number> = {};
+
+    await Promise.all(
+      projectIds.map(async (projectId) => {
+        try {
+          const response = await fetch(`${getApiBaseUrl()}/api/projects/${projectId}/endpoints`, {
+            credentials: 'include',
+          });
+          if (response.ok) {
+            const json = await response.json();
+            counts[projectId] = (json.data || []).length;
+          }
+        } catch {
+          // Ignore errors for individual projects
+        }
+      })
+    );
+
+    setEndpointCounts(counts);
+  }, []);
 
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
+
+  // Fetch endpoint counts when projects change
+  useEffect(() => {
+    if (projects.length > 0) {
+      fetchEndpointCounts(projects.map(p => p.id));
+    }
+  }, [projects, fetchEndpointCounts]);
 
   const handleLogout = async () => {
     await logout();
@@ -119,6 +151,7 @@ export function Home() {
         ) : (
           <ProjectList
             projects={projects}
+            endpointCounts={endpointCounts}
             onDelete={handleDelete}
             emptyAction={
               <div className="flex gap-3">

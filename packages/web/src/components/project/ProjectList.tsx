@@ -4,11 +4,12 @@ import { EmptyState } from '../common/EmptyState';
 
 interface ProjectListProps {
   projects: Project[];
+  endpointCounts?: Record<string, number>;
   onDelete?: (projectId: string) => void;
   emptyAction?: React.ReactNode;
 }
 
-export function ProjectList({ projects, onDelete, emptyAction }: ProjectListProps) {
+export function ProjectList({ projects, endpointCounts = {}, onDelete, emptyAction }: ProjectListProps) {
   if (projects.length === 0) {
     return (
       <EmptyState
@@ -30,6 +31,7 @@ export function ProjectList({ projects, onDelete, emptyAction }: ProjectListProp
         <ProjectCard
           key={project.id}
           project={project}
+          endpointCount={endpointCounts[project.id]}
           onDelete={onDelete}
         />
       ))}
