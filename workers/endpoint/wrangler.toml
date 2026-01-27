@@ -7,6 +7,9 @@ compatibility_flags = ["nodejs_compat"]
 port = 8788
 inspector_port = 9230
 
+[observability]
+enabled = true
+
 [vars]
 ENVIRONMENT = "development"
 
