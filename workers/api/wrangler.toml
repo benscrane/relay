@@ -22,11 +22,7 @@ script_name = "relay-endpoint"
 
 # Production environment
 [env.production]
-vars = { ENVIRONMENT = "production", APP_URL = "https://app.YOUR_DOMAIN", API_URL = "https://api.YOUR_DOMAIN", COOKIE_DOMAIN = ".YOUR_DOMAIN" }
-
-[env.production.routes]
-pattern = "api.YOUR_DOMAIN/*"
-zone_name = "YOUR_DOMAIN"
+vars = { ENVIRONMENT = "production" }
 
 [[env.production.d1_databases]]
 binding = "DB"

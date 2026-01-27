@@ -22,14 +22,6 @@ new_sqlite_classes = ["EndpointDO"]
 [env.production]
 vars = { ENVIRONMENT = "production" }
 
-[[env.production.routes]]
-pattern = "*.YOUR_DOMAIN/*"
-zone_name = "YOUR_DOMAIN"
-
-[[env.production.routes]]
-pattern = "YOUR_DOMAIN/m/*"
-zone_name = "YOUR_DOMAIN"
-
 [[env.production.durable_objects.bindings]]
 name = "ENDPOINT_DO"
 class_name = "EndpointDO"
