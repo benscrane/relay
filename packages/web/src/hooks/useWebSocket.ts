@@ -33,9 +33,10 @@ function getWebSocketUrl(subdomain?: string): string {
     // In dev, endpoint worker (with WebSocket) runs on port 8788
     return 'ws://localhost:8788';
   }
-  const domain = import.meta.env.VITE_ENDPOINT_DOMAIN || 'relay.dev';
+  const endpointUrl = import.meta.env.VITE_ENDPOINT_URL;
   const resolvedSubdomain = subdomain || window.location.hostname.split('.')[0];
-  return `wss://${resolvedSubdomain}.${domain}`;
+  // Use path-based routing: /m/{projectId}
+  return `${endpointUrl}/m/${resolvedSubdomain}`;
 }
 
 export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketReturn {

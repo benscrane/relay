@@ -53,7 +53,7 @@ jobs:
         run: pnpm build
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
-          VITE_ENDPOINT_DOMAIN: ${{ vars.VITE_ENDPOINT_DOMAIN }}
+          VITE_ENDPOINT_URL: ${{ vars.VITE_ENDPOINT_URL }}
 
       - name: Deploy Endpoint Worker
         uses: cloudflare/wrangler-action@v3
