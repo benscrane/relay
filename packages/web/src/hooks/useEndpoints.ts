@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { Endpoint, CreateEndpointRequest, UpdateEndpointRequest } from '@relay/shared';
+import { getApiBaseUrl } from '../config';
 
 interface UseEndpointsReturn {
   endpoints: Endpoint[];
@@ -9,13 +10,6 @@ interface UseEndpointsReturn {
   createEndpoint: (projectId: string, data: CreateEndpointRequest) => Promise<Endpoint>;
   updateEndpoint: (projectId: string, endpointId: string, data: UpdateEndpointRequest) => Promise<Endpoint>;
   deleteEndpoint: (projectId: string, endpointId: string) => Promise<void>;
-}
-
-function getApiBaseUrl(): string {
-  if (import.meta.env.DEV) {
-    return 'http://localhost:8787';
-  }
-  return import.meta.env.VITE_API_URL || '';
 }
 
 export function useEndpoints(): UseEndpointsReturn {

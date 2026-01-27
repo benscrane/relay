@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { User, LoginRequest, RegisterRequest } from '@relay/shared';
+import { getApiBaseUrl } from '../config';
 
 interface AuthContextValue {
   user: User | null;
@@ -16,13 +17,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-function getApiBaseUrl(): string {
-  if (import.meta.env.DEV) {
-    return 'http://localhost:8787';
-  }
-  return import.meta.env.VITE_API_URL || '';
-}
 
 interface AuthProviderProps {
   children: ReactNode;

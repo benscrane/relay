@@ -5,22 +5,7 @@ import { useProjects, useEndpoints, useWebSocket } from '../hooks';
 import { RequestList } from '../components/request';
 import { RulesPanel } from '../components/rules';
 import { CopyButton, MethodBadge } from '../components/common';
-
-function getEndpointUrl(project: { id: string; userId: string | null; subdomain: string }, path: string): string {
-  const isAnonymous = !project.userId;
-
-  if (import.meta.env.DEV) {
-    // In dev, endpoint worker runs on port 8788
-    // Anonymous projects use path-based routing
-    return isAnonymous ? `http://localhost:8788/m/${project.id}${path}` : `http://localhost:8788${path}`;
-  }
-
-  // In production, anonymous projects also use path-based routing on main domain
-  // User-owned projects use subdomain-based routing
-  return isAnonymous
-    ? `https://relay.dev/m/${project.id}${path}`
-    : `https://${project.subdomain}.relay.dev${path}`;
-}
+import { getMockApiUrl, getProjectDoName } from '../config';
 
 export function EndpointDetail() {
   const { projectId, endpointId } = useParams<{ projectId: string; endpointId: string }>();
@@ -90,7 +75,7 @@ export function EndpointDetail() {
     );
   }
 
-  const endpointUrl = getEndpointUrl(project, endpoint.path);
+  const endpointUrl = getMockApiUrl(getProjectDoName(project)) + endpoint.path;
 
   return (
     <div className="min-h-screen bg-gray-100">

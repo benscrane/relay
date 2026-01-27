@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { CreateProjectRequest } from '@relay/shared';
+import { getEndpointBaseUrl } from '../../config';
 
 interface ProjectFormProps {
   onSubmit: (data: CreateProjectRequest) => Promise<void>;
@@ -11,6 +12,10 @@ export function ProjectForm({ onSubmit, onCancel, isLoading }: ProjectFormProps)
   const [name, setName] = useState('');
   const [subdomain, setSubdomain] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  // Get the endpoint base URL for display (strip protocol for prefix display)
+  const endpointBase = getEndpointBaseUrl();
+  const endpointDisplay = endpointBase.replace(/^https?:\/\//, '') + '/m/';
 
   const handleNameChange = (value: string) => {
     setName(value);
@@ -71,24 +76,24 @@ export function ProjectForm({ onSubmit, onCancel, isLoading }: ProjectFormProps)
 
       <div>
         <label htmlFor="subdomain" className="block text-sm font-medium text-gray-700 mb-1">
-          Subdomain
+          Identifier
         </label>
         <div className="flex items-center">
+          <span className="px-3 py-2 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md text-gray-500 text-sm truncate max-w-[200px]">
+            {endpointDisplay}
+          </span>
           <input
             type="text"
             id="subdomain"
             value={subdomain}
             onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
             placeholder="my-api"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             disabled={isLoading}
           />
-          <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-500 text-sm">
-            .relay.dev
-          </span>
         </div>
         <p className="mt-1 text-xs text-gray-500">
-          Your mock endpoint URL will be: https://{subdomain || 'your-subdomain'}.relay.dev
+          Your mock endpoint URL will be: {endpointBase}/m/{subdomain || 'your-identifier'}
         </p>
       </div>
 

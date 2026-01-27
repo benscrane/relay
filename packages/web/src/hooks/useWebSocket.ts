@@ -6,6 +6,7 @@ import type {
   RequestMessage,
   HistoryMessage
 } from '@relay/shared';
+import { getEndpointWebSocketUrl } from '../config';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
@@ -29,14 +30,10 @@ const MIN_RECONNECT_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30000;
 
 function getWebSocketUrl(subdomain?: string): string {
-  if (import.meta.env.DEV) {
-    // In dev, endpoint worker (with WebSocket) runs on port 8788
-    return 'ws://localhost:8788';
-  }
-  const endpointUrl = import.meta.env.VITE_ENDPOINT_URL;
+  const baseWsUrl = getEndpointWebSocketUrl();
   const resolvedSubdomain = subdomain || window.location.hostname.split('.')[0];
   // Use path-based routing: /m/{projectId}
-  return `${endpointUrl}/m/${resolvedSubdomain}`;
+  return `${baseWsUrl}/m/${resolvedSubdomain}`;
 }
 
 export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketReturn {

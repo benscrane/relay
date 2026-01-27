@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { Project, CreateProjectRequest } from '@relay/shared';
+import { getApiBaseUrl } from '../config';
 
 interface UseProjectsReturn {
   projects: Project[];
@@ -10,13 +11,6 @@ interface UseProjectsReturn {
   createProject: (data: CreateProjectRequest) => Promise<Project>;
   createAnonymousProject: () => Promise<Project>;
   deleteProject: (projectId: string) => Promise<void>;
-}
-
-function getApiBaseUrl(): string {
-  if (import.meta.env.DEV) {
-    return 'http://localhost:8787';
-  }
-  return import.meta.env.VITE_API_URL || '';
 }
 
 export function useProjects(): UseProjectsReturn {
