@@ -4,9 +4,9 @@ compatibility_flags = ["nodejs_compat"]
 
 # D1 Database
 [[d1_databases]]
-binding = "DB"
+binding = "relay_db"
 database_name = "relay-db"
-database_id = "YOUR_DATABASE_ID"
+database_id = "19945fb7-10cb-4894-bac3-d124d9981347"
 migrations_dir = "migrations"
 
 # Durable Objects
