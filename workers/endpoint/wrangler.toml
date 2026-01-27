@@ -1,0 +1,39 @@
+name = "relay-endpoint"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 8788
+inspector_port = 9230
+
+[vars]
+ENVIRONMENT = "development"
+
+[[durable_objects.bindings]]
+name = "ENDPOINT_DO"
+class_name = "EndpointDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["EndpointDO"]
+
+# Production environment
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[[env.production.routes]]
+pattern = "*.YOUR_DOMAIN/*"
+zone_name = "YOUR_DOMAIN"
+
+[[env.production.routes]]
+pattern = "YOUR_DOMAIN/m/*"
+zone_name = "YOUR_DOMAIN"
+
+[[env.production.durable_objects.bindings]]
+name = "ENDPOINT_DO"
+class_name = "EndpointDO"
+
+[[env.production.migrations]]
+tag = "v1"
+new_sqlite_classes = ["EndpointDO"]

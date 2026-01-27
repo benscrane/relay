@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket Test - Relay</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 { margin-top: 0; }
+    h2 { 
+      margin-top: 0;
+      font-size: 18px;
+      color: #666;
+    }
+    button {
+      background: #0066cc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #0052a3;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .status.connected {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.disconnected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .log {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .log-entry {
+      padding: 5px;
+      border-bottom: 1px solid #dee2e6;
+      margin-bottom: 5px;
+    }
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+    .log-entry.request {
+      background: #e7f3ff;
+    }
+    .log-entry.pong {
+      background: #fff3cd;
+    }
+    .log-entry.history {
+      background: #d1ecf1;
+    }
+    input {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 300px;
+      margin-right: 10px;
+    }
+    pre {
+      margin: 5px 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔌 Relay WebSocket Test</h1>
+    <p>Test the real-time request logging and WebSocket broadcasting functionality.</p>
+  </div>
+
+  <div class="container">
+    <h2>WebSocket Connection</h2>
+    <div id="status" class="status disconnected">Disconnected</div>
+    <div>
+      <input type="text" id="wsUrl" placeholder="ws://localhost:8787" value="ws://localhost:8787">
+      <button id="connectBtn" onclick="connect()">Connect</button>
+      <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Actions</h2>
+    <button onclick="sendPing()" id="pingBtn" disabled>Send Ping</button>
+    <button onclick="getHistory()" id="historyBtn" disabled>Get History</button>
+    <button onclick="subscribe()" id="subscribeBtn" disabled>Subscribe</button>
+    <button onclick="clearLogs()">Clear Logs</button>
+  </div>
+
+  <div class="container">
+    <h2>Send Mock Request</h2>
+    <div>
+      <input type="text" id="mockUrl" placeholder="http://localhost:8787/test" value="http://localhost:8787/test">
+      <button onclick="sendMockRequest()">Send Request</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Message Log</h2>
+    <div id="log" class="log"></div>
+  </div>
+
+  <script>
+    let ws = null;
+    const logEl = document.getElementById('log');
+    const statusEl = document.getElementById('status');
+
+    function updateStatus(connected) {
+      statusEl.textContent = connected ? 'Connected' : 'Disconnected';
+      statusEl.className = connected ? 'status connected' : 'status disconnected';
+      
+      document.getElementById('connectBtn').disabled = connected;
+      document.getElementById('disconnectBtn').disabled = !connected;
+      document.getElementById('pingBtn').disabled = !connected;
+      document.getElementById('historyBtn').disabled = !connected;
+      document.getElementById('subscribeBtn').disabled = !connected;
+    }
+
+    function addLog(type, data) {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      
+      const timestamp = new Date().toLocaleTimeString();
+      const content = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+      
+      entry.innerHTML = `<strong>[${timestamp}] ${type.toUpperCase()}</strong><pre>${content}</pre>`;
+      logEl.insertBefore(entry, logEl.firstChild);
+    }
+
+    function connect() {
+      const url = document.getElementById('wsUrl').value;
+      
+      try {
+        ws = new WebSocket(url);
+        
+        ws.onopen = () => {
+          updateStatus(true);
+          addLog('info', 'WebSocket connected');
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            addLog(message.type, message);
+          } catch (e) {
+            addLog('error', 'Failed to parse message: ' + event.data);
+          }
+        };
+        
+        ws.onerror = (error) => {
+          addLog('error', 'WebSocket error: ' + error);
+        };
+        
+        ws.onclose = () => {
+          updateStatus(false);
+          addLog('info', 'WebSocket disconnected');
+          ws = null;
+        };
+      } catch (e) {
+        addLog('error', 'Failed to connect: ' + e.message);
+      }
+    }
+
+    function disconnect() {
+      if (ws) {
+        ws.close();
+      }
+    }
+
+    function sendPing() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const message = { type: 'ping' };
+        ws.send(JSON.stringify(message));
+        addLog('sent', message);
+      }
+    }
+
+    function getHistory() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const message = { type: 'getHistory' };
+        ws.send(JSON.stringify(message));
+        addLog('sent', message);
+      }
+    }
+
+    function subscribe() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const message = { type: 'subscribe', endpointId: 'test-endpoint' };
+        ws.send(JSON.stringify(message));
+        addLog('sent', message);
+      }
+    }
+
+    async function sendMockRequest() {
+      const url = document.getElementById('mockUrl').value;
+      
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            test: 'data',
+            timestamp: new Date().toISOString()
+          })
+        });
+        
+        const data = await response.json();
+        addLog('mock-response', { status: response.status, data });
+      } catch (e) {
+        addLog('error', 'Failed to send mock request: ' + e.message);
+      }
+    }
+
+    function clearLogs() {
+      logEl.innerHTML = '';
+    }
+  </script>
+</body>
+</html>

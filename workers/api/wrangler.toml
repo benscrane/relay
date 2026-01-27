@@ -1,0 +1,39 @@
+name = "relay-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 8787
+inspector_port = 9229
+
+[vars]
+ENVIRONMENT = "development"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "relay-db"
+database_id = "YOUR_DATABASE_ID"
+
+[[durable_objects.bindings]]
+name = "ENDPOINT_DO"
+class_name = "EndpointDO"
+script_name = "relay-endpoint"
+
+# Production environment
+[env.production]
+vars = { ENVIRONMENT = "production", APP_URL = "https://app.YOUR_DOMAIN", API_URL = "https://api.YOUR_DOMAIN", COOKIE_DOMAIN = ".YOUR_DOMAIN" }
+
+[env.production.routes]
+pattern = "api.YOUR_DOMAIN/*"
+zone_name = "YOUR_DOMAIN"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "relay-db"
+database_id = "YOUR_PRODUCTION_DATABASE_ID"
+
+[[env.production.durable_objects.bindings]]
+name = "ENDPOINT_DO"
+class_name = "EndpointDO"
+script_name = "relay-endpoint"

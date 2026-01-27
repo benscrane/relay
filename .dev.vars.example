@@ -1,0 +1,17 @@
+# Cloudflare account credentials (for local development)
+# CLOUDFLARE_ACCOUNT_ID=your_account_id
+# CLOUDFLARE_API_TOKEN=your_api_token
+
+# Auth (if using external auth provider)
+# AUTH_SECRET=your_auth_secret
+
+# Magic Link / OAuth
+RESEND_API_KEY=re_xxx
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+APP_URL=http://localhost:5173
+API_URL=http://localhost:8787
+
+# Stripe (for billing)
+# STRIPE_SECRET_KEY=sk_test_xxx
+# STRIPE_WEBHOOK_SECRET=whsec_xxx

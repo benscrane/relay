@@ -1,0 +1,22 @@
+{
+  "name": "@relay/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "db:migrate": "for f in ../../migrations/*.sql; do wrangler d1 execute relay-db --local --file=\"$f\"; done",
+    "db:reset": "rm -rf .wrangler/state/v3/d1 && pnpm db:migrate",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@relay/shared": "workspace:*",
+    "hono": "^4.2.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240405.0",
+    "typescript": "^5.4.0",
+    "wrangler": "^4.60.0"
+  }
+}
