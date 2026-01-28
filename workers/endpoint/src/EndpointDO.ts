@@ -1,4 +1,4 @@
-import { matchPath, normalizePath, generateId, generateRuleId, matchRule, interpolateParams } from '@relay/shared/utils';
+import { matchPath, normalizePath, generateId, generateRuleId, matchRule, interpolateParams, calculatePathSpecificity } from '@relay/shared/utils';
 import type { RequestContext } from '@relay/shared/utils';
 import type {
   ClientMessage,
@@ -540,12 +540,17 @@ export class EndpointDO implements DurableObject {
 
     // Find matching endpoint (match on path only, not method)
     const endpoints = this.sql
-      .exec<Endpoint>('SELECT * FROM endpoints')
+      .exec<Endpoint>('SELECT * FROM endpoints ORDER BY created_at ASC')
       .toArray();
+
+    // Sort endpoints by specificity (more specific paths first)
+    const sortedEndpoints = [...endpoints].sort((a, b) =>
+      calculatePathSpecificity(b.path) - calculatePathSpecificity(a.path)
+    );
 
     let matchedEndpoint: Endpoint | undefined;
     let endpointPathParams: Record<string, string> = {};
-    for (const endpoint of endpoints) {
+    for (const endpoint of sortedEndpoints) {
       const match = matchPath(endpoint.path, path);
       if (match.matched) {
         matchedEndpoint = endpoint;
@@ -564,7 +569,7 @@ export class EndpointDO implements DurableObject {
     // Get rules for this endpoint and try to match
     const rules = this.getRulesForEndpoint(matchedEndpoint.id);
     const requestContext: RequestContext = { method, path, headers: headersObj };
-    const ruleMatch = matchRule(rules, requestContext);
+    const ruleMatch = matchRule(rules, requestContext, endpointPathParams);
 
     // Determine response config (from rule or endpoint defaults)
     let responseStatus: number;

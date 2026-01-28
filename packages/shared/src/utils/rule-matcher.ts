@@ -17,7 +17,8 @@ export interface RuleMatchResult {
  */
 export function matchRule(
   rules: MockRule[],
-  context: RequestContext
+  context: RequestContext,
+  fallbackPathParams?: Record<string, string>
 ): RuleMatchResult | null {
   // Filter to active rules and sort by priority (higher priority first)
   const activeRules = rules
@@ -25,7 +26,7 @@ export function matchRule(
     .sort((a, b) => b.priority - a.priority);
 
   for (const rule of activeRules) {
-    const match = matchRuleAgainstContext(rule, context);
+    const match = matchRuleAgainstContext(rule, context, fallbackPathParams);
     if (match) {
       return match;
     }
@@ -36,7 +37,8 @@ export function matchRule(
 
 function matchRuleAgainstContext(
   rule: MockRule,
-  context: RequestContext
+  context: RequestContext,
+  fallbackPathParams?: Record<string, string>
 ): RuleMatchResult | null {
   // Check method match (null means match any)
   if (rule.matchMethod !== null && rule.matchMethod !== context.method) {
@@ -51,6 +53,8 @@ function matchRuleAgainstContext(
       return null;
     }
     pathParams = pathMatch.params;
+  } else if (fallbackPathParams) {
+    pathParams = fallbackPathParams;
   }
 
   // Check headers match

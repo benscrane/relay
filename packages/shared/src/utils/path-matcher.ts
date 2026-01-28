@@ -36,3 +36,12 @@ export function normalizePath(path: string): string {
   }
   return normalized;
 }
+
+export function calculatePathSpecificity(pattern: string): number {
+  const parts = pattern.split('/').filter(Boolean);
+  let score = 0;
+  for (const part of parts) {
+    score += part.startsWith(':') ? 1 : 2;
+  }
+  return score;
+}
