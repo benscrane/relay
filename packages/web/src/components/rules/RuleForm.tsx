@@ -114,7 +114,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g., Return user by ID"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -127,7 +127,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
             type="number"
             value={priority}
             onChange={(e) => setPriority(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           />
           {errors.priority && (
             <p className="text-red-500 text-sm mt-1">{errors.priority}</p>
@@ -144,7 +144,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
               type="checkbox"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-blue-600 rounded-sm focus:ring-blue-500"
             />
             <span className="text-sm text-gray-600">Rule is active</span>
           </label>
@@ -162,7 +162,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
             <select
               value={matchMethod}
               onChange={(e) => setMatchMethod(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Any method</option>
               {HTTP_METHODS.map((m) => (
@@ -180,7 +180,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
               value={matchPath}
               onChange={(e) => setMatchPath(e.target.value)}
               placeholder="e.g., /users/:id"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-xs text-gray-500 mt-1">Use :paramName for path parameters</p>
           </div>
@@ -195,7 +195,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
             onChange={(e) => setMatchHeaders(e.target.value)}
             placeholder='{"Content-Type": "application/json"}'
             rows={2}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           />
           {errors.matchHeaders && (
             <p className="text-red-500 text-sm mt-1">{errors.matchHeaders}</p>
@@ -215,7 +215,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
               type="number"
               value={responseStatus}
               onChange={(e) => setResponseStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             />
             {errors.responseStatus && (
               <p className="text-red-500 text-sm mt-1">{errors.responseStatus}</p>
@@ -231,7 +231,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
               value={responseDelayMs}
               onChange={(e) => setResponseDelayMs(e.target.value)}
               min="0"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             />
             {errors.responseDelayMs && (
               <p className="text-red-500 text-sm mt-1">{errors.responseDelayMs}</p>
@@ -247,7 +247,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
             value={responseBody}
             onChange={(e) => setResponseBody(e.target.value)}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           />
           {errors.responseBody && (
             <p className="text-red-500 text-sm mt-1">{errors.responseBody}</p>
@@ -266,7 +266,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
             onChange={(e) => setResponseHeaders(e.target.value)}
             placeholder='{"X-Custom-Header": "value"}'
             rows={2}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           />
           {errors.responseHeaders && (
             <p className="text-red-500 text-sm mt-1">{errors.responseHeaders}</p>
@@ -275,7 +275,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
       </div>
 
       {errors.submit && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-sm">
           {errors.submit}
         </div>
       )}

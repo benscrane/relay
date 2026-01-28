@@ -96,7 +96,7 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
               id="method"
               value={method}
               onChange={(e) => setMethod(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:ring-blue-500 focus:border-blue-500"
               disabled={isLoading}
             >
               {HTTP_METHODS.map(m => (
@@ -115,7 +115,7 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
               value={path}
               onChange={(e) => setPath(e.target.value)}
               placeholder="/api/users"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 font-mono"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:ring-blue-500 focus:border-blue-500 font-mono"
               disabled={isLoading}
             />
           </div>
@@ -134,7 +134,7 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
             onChange={(e) => setStatusCode(e.target.value)}
             min="100"
             max="599"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:ring-blue-500 focus:border-blue-500"
             disabled={isLoading}
           />
         </div>
@@ -149,7 +149,7 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
             value={delay}
             onChange={(e) => setDelay(e.target.value)}
             min="0"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:ring-blue-500 focus:border-blue-500"
             disabled={isLoading}
           />
         </div>
@@ -164,7 +164,7 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
           value={responseBody}
           onChange={(e) => setResponseBody(e.target.value)}
           rows={8}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
           disabled={isLoading}
         />
       </div>

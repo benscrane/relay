@@ -10,7 +10,7 @@ interface RequestListProps {
 
 export function RequestList({ requests, status, onClear }: RequestListProps) {
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white rounded-lg shadow-sm">
       <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h3 className="font-semibold text-gray-800">Request Stream</h3>
@@ -24,7 +24,7 @@ export function RequestList({ requests, status, onClear }: RequestListProps) {
         <button
           onClick={onClear}
           disabled={requests.length === 0}
-          className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Clear
         </button>

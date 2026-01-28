@@ -47,7 +47,7 @@ export function RequestItem({ request }: RequestItemProps) {
           {request.path}
         </span>
         {(request.matched_rule_name || request.matched_rule_id) && (
-          <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded">
+          <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-sm">
             {request.matched_rule_name || 'Rule'}
           </span>
         )}

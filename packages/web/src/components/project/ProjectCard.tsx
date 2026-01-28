@@ -11,15 +11,15 @@ export function ProjectCard({ project, endpointCount = 0, onDelete }: ProjectCar
   const isAnonymous = !project.userId;
 
   return (
-    <div className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+    <div className="bg-base-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
       <Link to={`/projects/${project.id}`} className="block p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-medium text-gray-900 truncate">
+            <h3 className="text-lg font-medium text-base-content truncate">
               {project.name}
             </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+            <p className="text-sm text-neutral-content mt-1">
+              <code className="text-xs bg-neutral px-1.5 py-0.5 rounded-sm">
                 {project.subdomain}
               </code>
               {isAnonymous && (
@@ -30,23 +30,23 @@ export function ProjectCard({ project, endpointCount = 0, onDelete }: ProjectCar
         </div>
 
         <div className="mt-4 flex items-center justify-between text-sm">
-          <span className="text-gray-500">
+          <span className="text-base-content/70">
             {endpointCount} {endpointCount === 1 ? 'endpoint' : 'endpoints'}
           </span>
-          <span className="text-gray-400 text-xs">
+          <span className="text-base-content/70 text-xs">
             Created {new Date(project.createdAt).toLocaleDateString()}
           </span>
         </div>
       </Link>
 
       {onDelete && (
-        <div className="border-t border-gray-100 px-4 py-2">
+        <div className="border-t border-base-content px-4 py-2">
           <button
             onClick={(e) => {
               e.preventDefault();
               onDelete(project.id);
             }}
-            className="text-sm text-red-600 hover:text-red-800"
+            className="text-sm text-warning hover:text-warning/80"
           >
             Delete
           </button>

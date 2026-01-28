@@ -69,7 +69,7 @@ export function ProjectForm({ onSubmit, onCancel, isLoading }: ProjectFormProps)
           value={name}
           onChange={(e) => handleNameChange(e.target.value)}
           placeholder="My API Project"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:ring-blue-500 focus:border-blue-500"
           disabled={isLoading}
         />
       </div>
@@ -88,7 +88,7 @@ export function ProjectForm({ onSubmit, onCancel, isLoading }: ProjectFormProps)
             value={subdomain}
             onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
             placeholder="my-api"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md shadow-xs focus:ring-blue-500 focus:border-blue-500"
             disabled={isLoading}
           />
         </div>

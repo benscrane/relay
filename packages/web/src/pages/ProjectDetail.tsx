@@ -93,7 +93,7 @@ export function ProjectDetail() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-xs">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -105,7 +105,7 @@ export function ProjectDetail() {
               <div>
                 <h1 className="text-xl font-bold text-gray-900">{project.name}</h1>
                 <p className="text-sm text-gray-500">
-                  <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{project.subdomain}</code>
+                  <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded-sm">{project.subdomain}</code>
                   {!project.userId && (
                     <span className="ml-2 text-xs text-amber-600">(anonymous)</span>
                   )}
@@ -114,7 +114,7 @@ export function ProjectDetail() {
             </div>
             <button
               onClick={handleDeleteProject}
-              className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+              className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-sm"
             >
               Delete Project
             </button>
@@ -123,7 +123,7 @@ export function ProjectDetail() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 bg-white rounded-lg shadow p-4">
+        <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
           <div className="flex items-center justify-between">
             <div>
               <label className="text-sm text-gray-500 block mb-1">Mock API URL</label>
@@ -146,7 +146,7 @@ export function ProjectDetail() {
         </div>
 
         {showForm && (
-          <div className="mb-6 bg-white rounded-lg shadow p-6">
+          <div className="mb-6 bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Endpoint</h3>
             <EndpointForm
               onSubmit={handleCreateEndpoint}

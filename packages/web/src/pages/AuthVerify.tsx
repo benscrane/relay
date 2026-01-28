@@ -40,7 +40,7 @@ export function AuthVerify() {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
               <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -63,7 +63,7 @@ export function AuthVerify() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="w-12 h-12 mx-auto mb-4 animate-spin border-4 border-blue-600 border-t-transparent rounded-full"></div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Verifying</h1>
           <p className="text-gray-600">Please wait while we sign you in...</p>

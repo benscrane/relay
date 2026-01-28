@@ -81,64 +81,47 @@ export function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-base-100">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Relay</h1>
+          <div className="flex flex-row items-center justify-end">
             <div className="flex items-center gap-3">
               <button
                 onClick={handleQuickStart}
                 disabled={isCreating}
-                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                className="btn btn-outline"
               >
                 Quick Start
               </button>
               {user && (
                 <button
-                  onClick={() => setShowForm(true)}
+                  onClick={()=>(document.getElementById('new_project_modal') as any)?.showModal()}
                   disabled={isCreating}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="btn btn-primary"
                 >
                   Create Project
                 </button>
               )}
-              {!authLoading && (
-                user ? (
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-600">{user.email}</span>
-                    <button
-                      onClick={handleLogout}
-                      className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                  >
-                    Sign in
-                  </Link>
-                )
-              )}
             </div>
           </div>
         </div>
-      </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {showForm && (
-          <div className="mb-8 bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Create New Project</h2>
+        <dialog id="new_project_modal" className="modal modal-bottom sm:modal-middle">
+          <div className="modal-box max-w-4xl">
+            <form method="dialog">
+              {/* if there is a button in form, it will close the modal */}
+              <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => console.log('clicked')}>✕</button>
+            </form>
+            <h3 className="font-bold text-lg">New Project</h3>
             <ProjectForm
               onSubmit={handleCreateProject}
               onCancel={() => setShowForm(false)}
               isLoading={isCreating}
             />
+            <div className="modal-action">
+            </div>
           </div>
-        )}
+        </dialog>
 
         {error && (
           <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-md text-red-600">
@@ -147,30 +130,12 @@ export function Home() {
         )}
 
         {loading && projects.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">Loading projects...</div>
+          <div className="text-center py-12 text-base-content/70">Loading projects...</div>
         ) : (
           <ProjectList
             projects={projects}
             endpointCounts={endpointCounts}
             onDelete={handleDelete}
-            emptyAction={
-              <div className="flex gap-3">
-                <button
-                  onClick={handleQuickStart}
-                  disabled={isCreating}
-                  className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50"
-                >
-                  Quick Start (Anonymous)
-                </button>
-                <button
-                  onClick={() => setShowForm(true)}
-                  disabled={isCreating}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Create Project
-                </button>
-              </div>
-            }
           />
         )}
       </main>

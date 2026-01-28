@@ -19,7 +19,7 @@ export function MethodBadge({ method, size = 'md' }: MethodBadgeProps) {
 
   return (
     <span
-      className={`inline-block font-semibold rounded ${colorClass} ${sizeClass}`}
+      className={`inline-block font-semibold rounded-sm ${colorClass} ${sizeClass}`}
     >
       {method.toUpperCase()}
     </span>

@@ -37,7 +37,7 @@ export function RuleList({ rules, onEdit, onDelete, onToggleActive }: RuleListPr
                 <MethodBadge method={rule.matchMethod} />
               )}
               {!rule.matchMethod && (
-                <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded">
+                <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-sm">
                   ANY
                 </span>
               )}
@@ -84,7 +84,7 @@ export function RuleList({ rules, onEdit, onDelete, onToggleActive }: RuleListPr
 
               <button
                 onClick={() => onEdit(rule)}
-                className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-sm transition-colors"
                 title="Edit rule"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,7 +94,7 @@ export function RuleList({ rules, onEdit, onDelete, onToggleActive }: RuleListPr
 
               <button
                 onClick={() => onDelete(rule.id)}
-                className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-sm transition-colors"
                 title="Delete rule"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -42,7 +42,7 @@ export function RulesPanel({ projectId, endpointId }: RulesPanelProps) {
 
   if (loading && rules.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow-sm">
         <div className="px-4 py-3 border-b border-gray-200">
           <h3 className="font-semibold text-gray-800">Mock Rules</h3>
         </div>
@@ -55,7 +55,7 @@ export function RulesPanel({ projectId, endpointId }: RulesPanelProps) {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow-sm">
         <div className="px-4 py-3 border-b border-gray-200">
           <h3 className="font-semibold text-gray-800">Mock Rules</h3>
         </div>
@@ -67,7 +67,7 @@ export function RulesPanel({ projectId, endpointId }: RulesPanelProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white rounded-lg shadow-sm">
       <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
         <h3 className="font-semibold text-gray-800">Mock Rules</h3>
         {formMode.type === 'closed' && (

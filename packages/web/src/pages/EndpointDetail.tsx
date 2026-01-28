@@ -82,7 +82,7 @@ export function EndpointDetail() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-xs">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <Link to={`/projects/${projectId}`} className="text-gray-500 hover:text-gray-700">
@@ -116,7 +116,7 @@ export function EndpointDetail() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 bg-white rounded-lg shadow p-4">
+        <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
           <div className="flex items-center justify-between">
             <div>
               <label className="text-sm text-gray-500 block mb-1">Endpoint URL</label>

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Navbar } from './components/layout';
 import { Home, ProjectDetail, EndpointDetail, Login, Register, AuthVerify } from './pages';
 import { AuthProvider } from './hooks';
 
@@ -6,6 +7,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
