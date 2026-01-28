@@ -1,6 +1,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks';
+import { ROUTES } from '../routes';
 
 export function Login() {
   const navigate = useNavigate();
@@ -68,31 +69,33 @@ export function Login() {
   // Show success message if magic link was sent
   if (magicLinkSent && magicLinkEmail) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+      <div className="flex-1 bg-base-100 flex items-center justify-center px-4">
         <div className="max-w-md w-full">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Relay</h1>
+            <h1 className="text-3xl font-bold text-base-content">Relay</h1>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+          <div className="card bg-base-200 shadow-sm">
+            <div className="card-body text-center">
+              <div className="w-12 h-12 mx-auto mb-4 bg-success/20 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-base-content mb-2">Check your email</h2>
+              <p className="text-base-content/70 mb-4">
+                We sent a sign-in link to <span className="font-medium">{magicLinkEmail}</span>
+              </p>
+              <p className="text-sm text-base-content/50">
+                The link will expire in 15 minutes.
+              </p>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Check your email</h2>
-            <p className="text-gray-600 mb-4">
-              We sent a sign-in link to <span className="font-medium">{magicLinkEmail}</span>
-            </p>
-            <p className="text-sm text-gray-500">
-              The link will expire in 15 minutes.
-            </p>
           </div>
 
           <div className="mt-4 text-center">
             <button
               onClick={() => window.location.reload()}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="btn btn-ghost btn-sm"
             >
               Use a different email
             </button>
@@ -103,16 +106,16 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-base-100 flex items-center justify-center px-4">
+    <div className="flex-1 bg-base-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-base-content">Relay</h1>
           <p className="mt-2 text-base-content/70">Sign in to your account</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="p-6">
           {(error || oauthError) && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+            <div className="alert alert-error mb-4">
               {error || oauthError}
             </div>
           )}
@@ -121,7 +124,7 @@ export function Login() {
           <button
             onClick={handleGitHubLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 py-2 px-4 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-block btn-outline"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
@@ -129,22 +132,14 @@ export function Login() {
             Continue with GitHub
           </button>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">or</span>
-            </div>
-          </div>
+          <div className="divider">or</div>
 
           {showPasswordLogin ? (
             /* Password Login Form */
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
+              <div className="form-control">
+                <label htmlFor="email" className="label">
+                  <span className="label-text">Email</span>
                 </label>
                 <input
                   id="email"
@@ -153,14 +148,14 @@ export function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="input input-bordered w-full"
                   placeholder="you@example.com"
                 />
               </div>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
+              <div className="form-control">
+                <label htmlFor="password" className="label">
+                  <span className="label-text">Password</span>
                 </label>
                 <input
                   id="password"
@@ -169,7 +164,7 @@ export function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="input input-bordered w-full"
                   placeholder="Enter your password"
                 />
               </div>
@@ -177,7 +172,7 @@ export function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn btn-primary w-full"
               >
                 {loading ? 'Signing in...' : 'Sign in'}
               </button>
@@ -185,7 +180,7 @@ export function Login() {
               <button
                 type="button"
                 onClick={() => setShowPasswordLogin(false)}
-                className="w-full text-sm text-gray-500 hover:text-gray-700"
+                className="btn btn-ghost btn-sm w-full"
               >
                 Sign in with magic link instead
               </button>
@@ -193,9 +188,9 @@ export function Login() {
           ) : (
             /* Magic Link Form */
             <form onSubmit={handleMagicLinkSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
+              <div className="form-control">
+                <label htmlFor="email" className="label">
+                  <span className="label-text">Email</span>
                 </label>
                 <input
                   id="email"
@@ -204,7 +199,7 @@ export function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="input input-bordered w-full"
                   placeholder="you@example.com"
                 />
               </div>
@@ -212,7 +207,7 @@ export function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn btn-primary w-full"
               >
                 {loading ? 'Sending...' : 'Send magic link'}
               </button>
@@ -220,23 +215,23 @@ export function Login() {
               <button
                 type="button"
                 onClick={() => setShowPasswordLogin(true)}
-                className="w-full text-sm text-gray-500 hover:text-gray-700"
+                className="btn btn-ghost btn-sm w-full"
               >
                 Sign in with password instead
               </button>
             </form>
           )}
 
-          <div className="mt-4 text-center text-sm text-gray-600">
+          <div className="mt-4 text-center text-sm text-base-content/70">
             Don't have an account?{' '}
-            <Link to="/register" className="text-blue-600 hover:underline">
+            <Link to="/register" className="link link-primary">
               Sign up
             </Link>
           </div>
         </div>
 
         <div className="mt-4 text-center">
-          <Link to="/" className="text-sm text-gray-500 hover:text-gray-700">
+          <Link to={ROUTES.home()} className="link link-hover text-sm text-base-content/70">
             Continue without signing in
           </Link>
         </div>

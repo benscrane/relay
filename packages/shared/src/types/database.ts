@@ -26,7 +26,6 @@ export interface DbProject {
 export interface DbEndpoint {
   id: string;
   project_id: string;
-  method: string;
   path: string;
   response_body: string;
   status_code: number;

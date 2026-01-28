@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import type { Endpoint } from '@relay/shared';
-import { MethodBadge } from '../common/MethodBadge';
 import { EmptyState } from '../common/EmptyState';
 
 interface EndpointListProps {
@@ -32,9 +31,6 @@ export function EndpointList({ projectId, endpoints, onDelete, emptyAction }: En
         <thead className="bg-gray-50">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Method
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Path
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -51,9 +47,6 @@ export function EndpointList({ projectId, endpoints, onDelete, emptyAction }: En
         <tbody className="bg-white divide-y divide-gray-200">
           {endpoints.map(endpoint => (
             <tr key={endpoint.id} className="hover:bg-gray-50">
-              <td className="px-4 py-3 whitespace-nowrap">
-                <MethodBadge method={endpoint.method} />
-              </td>
               <td className="px-4 py-3">
                 <Link
                   to={`/projects/${projectId}/endpoints/${endpoint.id}`}

@@ -11,6 +11,7 @@ interface UseProjectsReturn {
   createProject: (data: CreateProjectRequest) => Promise<Project>;
   createAnonymousProject: () => Promise<Project>;
   deleteProject: (projectId: string) => Promise<void>;
+  clearProjects: () => void;
 }
 
 export function useProjects(): UseProjectsReturn {
@@ -108,6 +109,10 @@ export function useProjects(): UseProjectsReturn {
     setProjects(prev => prev.filter(p => p.id !== projectId));
   }, []);
 
+  const clearProjects = useCallback(() => {
+    setProjects([]);
+  }, []);
+
   return {
     projects,
     loading,
@@ -117,5 +122,6 @@ export function useProjects(): UseProjectsReturn {
     createProject,
     createAnonymousProject,
     deleteProject,
+    clearProjects,
   };
 }

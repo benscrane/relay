@@ -17,12 +17,9 @@ interface EndpointFormEditProps {
 
 type EndpointFormProps = EndpointFormCreateProps | EndpointFormEditProps;
 
-const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
-
 export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: EndpointFormProps) {
   const isEdit = !!endpoint;
 
-  const [method, setMethod] = useState(endpoint?.method || 'GET');
   const [path, setPath] = useState(endpoint?.path || '/');
   const [responseBody, setResponseBody] = useState(
     endpoint?.responseBody || '{\n  "message": "Hello, World!"\n}'
@@ -70,7 +67,7 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
         const data: UpdateEndpointRequest = { responseBody, statusCode: statusCodeNum, delay: delayNum };
         await (onSubmit as (data: UpdateEndpointRequest) => Promise<void>)(data);
       } else {
-        const data: CreateEndpointRequest = { method, path: path.trim(), responseBody, statusCode: statusCodeNum, delay: delayNum };
+        const data: CreateEndpointRequest = { path: path.trim(), responseBody, statusCode: statusCodeNum, delay: delayNum };
         await (onSubmit as (data: CreateEndpointRequest) => Promise<void>)(data);
       }
     } catch (err) {
@@ -87,38 +84,20 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
       )}
 
       {!isEdit && (
-        <div className="grid grid-cols-4 gap-4">
-          <div>
-            <label htmlFor="method" className="block text-sm font-medium text-gray-700 mb-1">
-              Method
-            </label>
-            <select
-              id="method"
-              value={method}
-              onChange={(e) => setMethod(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:ring-blue-500 focus:border-blue-500"
-              disabled={isLoading}
-            >
-              {HTTP_METHODS.map(m => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="col-span-3">
-            <label htmlFor="path" className="block text-sm font-medium text-gray-700 mb-1">
-              Path
-            </label>
-            <input
-              type="text"
-              id="path"
-              value={path}
-              onChange={(e) => setPath(e.target.value)}
-              placeholder="/api/users"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:ring-blue-500 focus:border-blue-500 font-mono"
-              disabled={isLoading}
-            />
-          </div>
+        <div>
+          <label htmlFor="path" className="block text-sm font-medium text-gray-700 mb-1">
+            Path
+          </label>
+          <input
+            type="text"
+            id="path"
+            value={path}
+            onChange={(e) => setPath(e.target.value)}
+            placeholder="/api/users"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:ring-blue-500 focus:border-blue-500 font-mono"
+            disabled={isLoading}
+          />
+          <p className="mt-1 text-xs text-gray-500">All HTTP methods (GET, POST, PUT, etc.) will be accepted at this path</p>
         </div>
       )}
 

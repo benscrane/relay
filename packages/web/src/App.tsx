@@ -7,15 +7,19 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Navbar />
-        <Routes>
+        <div className="min-h-screen flex flex-col">
+          <Navbar />
+          <main className="flex-1 flex flex-col">
+            <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/auth/verify" element={<AuthVerify />} />
           <Route path="/projects/:projectId" element={<ProjectDetail />} />
           <Route path="/projects/:projectId/endpoints/:endpointId" element={<EndpointDetail />} />
-        </Routes>
+            </Routes>
+          </main>
+        </div>
       </BrowserRouter>
     </AuthProvider>
   );

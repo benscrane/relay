@@ -37,24 +37,24 @@ export function Register() {
   const displayError = validationError || error;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+    <div className="flex-1 bg-base-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Relay</h1>
-          <p className="mt-2 text-gray-600">Create your account</p>
+          <h1 className="text-3xl font-bold text-base-content">Relay</h1>
+          <p className="mt-2 text-base-content/70">Create your account</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {displayError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+              <div className="alert alert-error mb-4">
                 {displayError}
               </div>
             )}
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+            <div className="form-control">
+              <label htmlFor="email" className="label">
+                <span className="label-text">Email</span>
               </label>
               <input
                 id="email"
@@ -63,14 +63,14 @@ export function Register() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input input-bordered w-full"
                 placeholder="you@example.com"
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+            <div className="form-control">
+              <label htmlFor="password" className="label">
+                <span className="label-text">Password</span>
               </label>
               <input
                 id="password"
@@ -79,14 +79,14 @@ export function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="new-password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input input-bordered w-full"
                 placeholder="At least 8 characters"
               />
             </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                Confirm Password
+            <div className="form-control">
+              <label htmlFor="confirmPassword" className="label">
+                <span className="label-text">Confirm Password</span>
               </label>
               <input
                 id="confirmPassword"
@@ -95,7 +95,7 @@ export function Register() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 autoComplete="new-password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input input-bordered w-full"
                 placeholder="Confirm your password"
               />
             </div>
@@ -103,22 +103,22 @@ export function Register() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary w-full"
             >
               {loading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
 
-          <div className="mt-4 text-center text-sm text-gray-600">
+          <div className="mt-4 text-center text-sm text-base-content/70">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:underline">
+            <Link to="/login" className="link link-primary">
               Sign in
             </Link>
           </div>
         </div>
 
         <div className="mt-4 text-center">
-          <Link to="/" className="text-sm text-gray-500 hover:text-gray-700">
+          <Link to="/" className="link link-hover text-sm text-base-content/70">
             Continue without signing in
           </Link>
         </div>

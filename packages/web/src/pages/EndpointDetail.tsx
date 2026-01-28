@@ -4,7 +4,7 @@ import type { Project, Endpoint } from '@relay/shared';
 import { useProjects, useEndpoints, useWebSocket } from '../hooks';
 import { RequestList } from '../components/request';
 import { RulesPanel } from '../components/rules';
-import { CopyButton, MethodBadge } from '../components/common';
+import { CopyButton } from '../components/common';
 import { getMockApiUrl, getProjectDoName } from '../config';
 
 export function EndpointDetail() {
@@ -90,12 +90,9 @@ export function EndpointDetail() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </Link>
-            <div className="flex items-center gap-3">
-              <MethodBadge method={endpoint.method} />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 font-mono">{endpoint.path}</h1>
-                <p className="text-sm text-gray-500">{project.name}</p>
-              </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 font-mono">{endpoint.path}</h1>
+              <p className="text-sm text-gray-500">{project.name}</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
               {status === 'connected' && (

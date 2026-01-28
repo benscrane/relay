@@ -200,7 +200,6 @@ router.post('/projects/:projectId/endpoints', async (c) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        method: body.method,
         path: body.path,
         response_body: body.responseBody,
         status_code: body.statusCode ?? 200,

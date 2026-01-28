@@ -7,7 +7,6 @@ export interface ApiResponse<T = unknown> {
 export interface Endpoint {
   id: string;
   projectId: string;
-  method: string;
   path: string;
   responseBody: string;
   statusCode: number;
@@ -26,7 +25,6 @@ export interface Project {
 }
 
 export interface CreateEndpointRequest {
-  method: string;
   path: string;
   responseBody: string;
   statusCode?: number;

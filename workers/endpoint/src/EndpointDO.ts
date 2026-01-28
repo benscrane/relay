@@ -15,7 +15,6 @@ import type {
 interface Endpoint {
   [key: string]: string | number | null;
   id: string;
-  method: string;
   path: string;
   response_body: string;
   status_code: number;
@@ -40,11 +39,19 @@ export class EndpointDO implements DurableObject {
   }
 
   private initializeSchema(): void {
+    // Migrate from old schema that had 'method' column
+    const existingColumns = this.sql.exec<{ name: string }>(
+      "PRAGMA table_info(endpoints)"
+    ).toArray();
+
+    if (existingColumns.some(c => c.name === 'method')) {
+      this.sql.exec(`DROP TABLE IF EXISTS endpoints`);
+    }
+
     this.sql.exec(`
       CREATE TABLE IF NOT EXISTS endpoints (
         id TEXT PRIMARY KEY,
-        method TEXT NOT NULL,
-        path TEXT NOT NULL,
+        path TEXT NOT NULL UNIQUE,
         response_body TEXT NOT NULL DEFAULT '{}',
         status_code INTEGER NOT NULL DEFAULT 200,
         delay_ms INTEGER NOT NULL DEFAULT 0,
@@ -84,7 +91,7 @@ export class EndpointDO implements DurableObject {
         FOREIGN KEY (endpoint_id) REFERENCES endpoints(id) ON DELETE CASCADE
       );
 
-      CREATE INDEX IF NOT EXISTS idx_endpoints_method_path ON endpoints(method, path);
+      CREATE INDEX IF NOT EXISTS idx_endpoints_path ON endpoints(path);
       CREATE INDEX IF NOT EXISTS idx_request_logs_endpoint ON request_logs(endpoint_id);
       CREATE INDEX IF NOT EXISTS idx_request_logs_timestamp ON request_logs(timestamp);
       CREATE INDEX IF NOT EXISTS idx_mock_rules_endpoint ON mock_rules(endpoint_id);
@@ -178,11 +185,23 @@ export class EndpointDO implements DurableObject {
 
     // POST /__internal/endpoints - Create a new endpoint
     if (path === '/__internal/endpoints' && request.method === 'POST') {
-      const body = await request.json() as { method: string; path: string; response_body?: string; status_code?: number; delay_ms?: number };
+      const body = await request.json() as { path: string; response_body?: string; status_code?: number; delay_ms?: number };
 
-      if (!body.method || !body.path) {
-        return new Response(JSON.stringify({ error: 'method and path are required' }), {
+      if (!body.path) {
+        return new Response(JSON.stringify({ error: 'path is required' }), {
           status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Check if endpoint with this path already exists
+      const existing = this.sql
+        .exec<Endpoint>('SELECT * FROM endpoints WHERE path = ?', body.path)
+        .toArray()[0];
+
+      if (existing) {
+        return new Response(JSON.stringify({ error: 'An endpoint with this path already exists' }), {
+          status: 409,
           headers: { 'Content-Type': 'application/json' },
         });
       }
@@ -191,10 +210,9 @@ export class EndpointDO implements DurableObject {
       const now = new Date().toISOString();
 
       this.sql.exec(
-        `INSERT INTO endpoints (id, method, path, response_body, status_code, delay_ms, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO endpoints (id, path, response_body, status_code, delay_ms, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         id,
-        body.method.toUpperCase(),
         body.path,
         body.response_body ?? '{}',
         body.status_code ?? 200,
@@ -520,9 +538,9 @@ export class EndpointDO implements DurableObject {
       headersObj[key] = value;
     });
 
-    // Find matching endpoint
+    // Find matching endpoint (match on path only, not method)
     const endpoints = this.sql
-      .exec<Endpoint>('SELECT * FROM endpoints WHERE method = ?', method)
+      .exec<Endpoint>('SELECT * FROM endpoints')
       .toArray();
 
     let matchedEndpoint: Endpoint | undefined;

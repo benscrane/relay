@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../routes';
 import { useAuth } from '../../hooks';
 
@@ -8,9 +9,11 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = () => {
     const { user, logout, loading: authLoading } = useAuth();
+    const navigate = useNavigate();
 
     const handleLogout = async () => {
         await logout();
+        navigate('/');
     }
 
     return (
