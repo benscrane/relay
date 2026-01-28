@@ -25,7 +25,7 @@ script_name = "relay-endpoint"
 
 # Production environment
 [env.production]
-vars = { ENVIRONMENT = "production" }
+vars = { ENVIRONMENT = "production", COOKIE_DOMAIN = ".relay.dev" }
 
 [[env.production.d1_databases]]
 binding = "DB"
