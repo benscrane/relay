@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { MockRule, CreateMockRuleRequest, UpdateMockRuleRequest } from '@relay/shared';
+import type { MockRule, CreateMockRuleRequest, UpdateMockRuleRequest } from '@mockd/shared';
 
 interface RuleFormProps {
   rule?: MockRule;

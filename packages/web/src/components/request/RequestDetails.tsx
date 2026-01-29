@@ -1,4 +1,4 @@
-import type { RequestLog } from '@relay/shared';
+import type { RequestLog } from '@mockd/shared';
 import { JsonViewer } from './JsonViewer';
 
 interface RequestDetailsProps {

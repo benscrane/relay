@@ -1,4 +1,4 @@
-name = "relay-api"
+name = "mockd-api"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
@@ -15,13 +15,13 @@ ENVIRONMENT = "development"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "relay-db"
+database_name = "mockd-db"
 database_id = "YOUR_DATABASE_ID"
 
 [[durable_objects.bindings]]
 name = "ENDPOINT_DO"
 class_name = "EndpointDO"
-script_name = "relay-endpoint"
+script_name = "mockd-endpoint"
 
 # Production environment
 [env.production]
@@ -29,10 +29,10 @@ vars = { ENVIRONMENT = "production" }
 
 [[env.production.d1_databases]]
 binding = "DB"
-database_name = "relay-db"
-database_id = "19945fb7-10cb-4894-bac3-d124d9981347"
+database_name = "mockd-db"
+database_id = "108790ef-e89b-4544-a37b-341746b60cc3"
 
 [[env.production.durable_objects.bindings]]
 name = "ENDPOINT_DO"
 class_name = "EndpointDO"
-script_name = "relay-endpoint-production"
+script_name = "mockd-endpoint-production"

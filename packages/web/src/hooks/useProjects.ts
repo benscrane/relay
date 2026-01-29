@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { Project, CreateProjectRequest } from '@relay/shared';
+import type { Project, CreateProjectRequest } from '@mockd/shared';
 import { getApiBaseUrl } from '../config';
 
 interface UseProjectsReturn {

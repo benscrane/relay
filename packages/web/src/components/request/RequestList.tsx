@@ -1,4 +1,4 @@
-import type { RequestLog } from '@relay/shared';
+import type { RequestLog } from '@mockd/shared';
 import { RequestItem } from './RequestItem';
 import type { ConnectionStatus } from '../../hooks/useWebSocket';
 

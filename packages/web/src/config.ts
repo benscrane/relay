@@ -18,7 +18,7 @@ export function getApiBaseUrl(): string {
 /**
  * Get the base URL for the endpoint worker (mock API server)
  * In dev: http://localhost:8788
- * In prod: configured via VITE_ENDPOINT_URL (e.g., https://relay-endpoint-production.ben-crane.workers.dev)
+ * In prod: configured via VITE_ENDPOINT_URL (e.g., https://mockd-endpoint-production.ben-crane.workers.dev)
  */
 export function getEndpointBaseUrl(): string {
   if (import.meta.env.DEV) {

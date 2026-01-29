@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { setCookie, getCookie, deleteCookie } from 'hono/cookie';
-import { generateUserId } from '@relay/shared/utils';
-import type { DbUser, DbSession, LoginRequest, RegisterRequest, User } from '@relay/shared/types';
+import { generateUserId } from '@mockd/shared/utils';
+import type { DbUser, DbSession, LoginRequest, RegisterRequest, User } from '@mockd/shared/types';
 import type { Env } from './index';
 
 export const authRouter = new Hono<{ Bindings: Env }>();

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { setCookie } from 'hono/cookie';
-import { generateUserId } from '@relay/shared/utils';
-import type { DbUser, DbMagicLinkToken, SendMagicLinkRequest } from '@relay/shared/types';
+import { generateUserId } from '@mockd/shared/utils';
+import type { DbUser, DbMagicLinkToken, SendMagicLinkRequest } from '@mockd/shared/types';
 import type { Env } from './index';
 import { mapDbUserToUser } from './auth';
 import { createEmailService } from './email';

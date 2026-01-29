@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import type { Project, CreateEndpointRequest } from '@relay/shared';
+import type { Project, CreateEndpointRequest } from '@mockd/shared';
 import { useProjects, useEndpoints } from '../hooks';
 import { EndpointList, EndpointForm } from '../components/endpoint';
 import { CopyButton } from '../components/common';

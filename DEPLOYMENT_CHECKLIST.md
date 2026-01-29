@@ -1,6 +1,6 @@
 # Cloudflare Deployment Checklist
 
-This document outlines everything needed before deploying Relay to Cloudflare.
+This document outlines everything needed before deploying mockd to Cloudflare.
 
 ## Blocking Issues
 
@@ -40,7 +40,7 @@ Set these via `wrangler secret put <NAME>`:
 
 ```bash
 # Create the database
-wrangler d1 create relay-db
+wrangler d1 create mockd-db
 
 # Note the database ID from output and update wrangler.toml files
 
@@ -112,7 +112,7 @@ Required DNS records:
 pnpm install
 
 # 2. Create D1 database
-wrangler d1 create relay-db
+wrangler d1 create mockd-db
 # Copy the database_id from output
 
 # 3. Update configuration files with real values

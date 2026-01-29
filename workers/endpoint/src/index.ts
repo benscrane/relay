@@ -8,7 +8,7 @@ export interface Env {
 }
 
 // Reserved subdomains that can't be used for projects
-const RESERVED_SUBDOMAINS = new Set(['www', 'api', 'app', 'admin', 'mock', 'relay']);
+const RESERVED_SUBDOMAINS = new Set(['www', 'api', 'app', 'admin', 'mock', 'mockd']);
 
 function extractSubdomain(request: Request, env: Env): { subdomain: string; pathPrefix: string } | null {
   const url = new URL(request.url);
@@ -32,7 +32,7 @@ function extractSubdomain(request: Request, env: Env): { subdomain: string; path
   }
 
   // Production: extract from Host header
-  // Supports: my-app.relay.dev, my-app.mock.relay.dev
+  // Supports: my-app.mockd.sh, my-app.mock.mockd.sh
   const host = url.hostname;
   const parts = host.split('.');
 

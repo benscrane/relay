@@ -29,7 +29,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                         <li><a>USEFUL LINK</a></li>
                     </ul>
                 </div>
-                <a className="btn btn-ghost text-xl" href={ROUTES.home()}>Relay</a>
+                <a className="btn btn-ghost text-xl" href={ROUTES.home()}>mockd</a>
             </div>
             <div className="navbar-center hidden lg:flex">
                 <ul className="menu menu-horizontal px-1">

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { Endpoint, CreateEndpointRequest, UpdateEndpointRequest } from '@relay/shared';
+import type { Endpoint, CreateEndpointRequest, UpdateEndpointRequest } from '@mockd/shared';
 import { getApiBaseUrl } from '../config';
 
 interface UseEndpointsReturn {

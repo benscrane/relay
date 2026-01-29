@@ -1,21 +1,21 @@
-name = "relay"
+name = "mockd"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 # D1 Database
 [[d1_databases]]
-binding = "relay_db"
-database_name = "relay-db"
-database_id = "19945fb7-10cb-4894-bac3-d124d9981347"
+binding = "mockd_db"
+database_name = "mockd-db"
+database_id = "108790ef-e89b-4544-a37b-341746b60cc3"
 migrations_dir = "migrations"
 
 # Durable Objects
 [[durable_objects.bindings]]
 name = "ENDPOINT_DO"
 class_name = "EndpointDO"
-script_name = "relay-endpoint"
+script_name = "mockd-endpoint"
 
 # Environment variables
 [vars]
-APP_URL = "https://app.relay.dev"
-API_URL = "https://api.relay.dev"
+APP_URL = "https://app.mockd.sh"
+API_URL = "https://api.mockd.sh"

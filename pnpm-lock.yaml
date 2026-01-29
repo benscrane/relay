@@ -26,7 +26,7 @@ importers:
 
   packages/web:
     dependencies:
-      '@relay/shared':
+      '@mockd/shared':
         specifier: workspace:*
         version: link:../shared
       react:
@@ -69,7 +69,7 @@ importers:
 
   workers/api:
     dependencies:
-      '@relay/shared':
+      '@mockd/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       hono:
@@ -88,7 +88,7 @@ importers:
 
   workers/endpoint:
     dependencies:
-      '@relay/shared':
+      '@mockd/shared':
         specifier: workspace:*
         version: link:../../packages/shared
     devDependencies:

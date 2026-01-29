@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import type { Project, Endpoint } from '@relay/shared';
+import type { Project, Endpoint } from '@mockd/shared';
 import { useProjects, useEndpoints, useWebSocket } from '../hooks';
 import { RequestList } from '../components/request';
 import { RulesPanel } from '../components/rules';

@@ -1,5 +1,5 @@
 {
-  "name": "relay",
+  "name": "mockd",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -8,8 +8,8 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
-    "db:migrate": "wrangler d1 migrations apply relay-db --local",
-    "db:migrate:prod": "wrangler d1 migrations apply relay-db"
+    "db:migrate": "wrangler d1 migrations apply mockd-db --local",
+    "db:migrate:prod": "wrangler d1 migrations apply mockd-db"
   },
   "devDependencies": {
     "turbo": "^2.0.0",

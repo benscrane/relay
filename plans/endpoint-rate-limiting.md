@@ -167,7 +167,7 @@ import {
   getWindowKey,
   calculateRateLimitHeaders,
   rateLimitExceededResponse,
-} from '@relay/shared/utils/rate-limiter';
+} from '@mockd/shared/utils/rate-limiter';
 
 // Inside handleMockRequest(), after endpoint is matched but before response:
 
@@ -214,7 +214,7 @@ const rateLimitHeaders = calculateRateLimitHeaders(rateLimit, count, 60000);
 When creating or updating endpoints, validate that the requested rate limit doesn't exceed the user's tier maximum:
 
 ```typescript
-import { TIER_LIMITS } from '@relay/shared/constants/limits';
+import { TIER_LIMITS } from '@mockd/shared/constants/limits';
 
 // In POST /projects/:projectId/endpoints
 // In PUT /projects/:projectId/endpoints/:id
