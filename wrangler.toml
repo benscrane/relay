@@ -17,5 +17,5 @@ script_name = "mockd-endpoint"
 
 # Environment variables
 [vars]
-APP_URL = "https://app.mockd.sh"
+APP_URL = "https://mockd.sh"
 API_URL = "https://api.mockd.sh"
