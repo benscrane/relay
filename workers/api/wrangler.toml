@@ -25,7 +25,7 @@ script_name = "mockd-endpoint"
 
 # Production environment
 [env.production]
-vars = { ENVIRONMENT = "production", APP_URL = "https://mockd.sh", API_URL = "https://api.mockd.sh" }
+vars = { ENVIRONMENT = "production", APP_URL = "https://mockd.sh", API_URL = "https://api.mockd.sh", COOKIE_DOMAIN = ".mockd.sh" }
 routes = [
   { pattern = "api.mockd.sh/*", zone_name = "mockd.sh" }
 ]
