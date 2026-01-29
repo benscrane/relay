@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../routes';
 import { useAuth } from '../../hooks';
+import { MockdLogo } from '../common';
 
 interface NavbarProps {
 
@@ -29,7 +30,9 @@ export const Navbar: React.FC<NavbarProps> = () => {
                         <li><a>USEFUL LINK</a></li>
                     </ul>
                 </div>
-                <a className="btn btn-ghost text-xl" href={ROUTES.home()}>mockd</a>
+                <a className="btn btn-ghost" href={ROUTES.home()}>
+                    <MockdLogo size="sm" />
+                </a>
             </div>
             <div className="navbar-center hidden lg:flex">
                 <ul className="menu menu-horizontal px-1">

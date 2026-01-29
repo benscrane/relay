@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks';
+import { MockdLogo } from '../components/common';
 
 export function Register() {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ export function Register() {
     <div className="flex-1 bg-base-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-base-content">mockd</h1>
+          <MockdLogo size="md" className="mx-auto" />
           <p className="mt-2 text-base-content/70">Create your account</p>
         </div>
 

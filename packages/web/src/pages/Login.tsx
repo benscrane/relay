@@ -2,6 +2,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks';
 import { ROUTES } from '../routes';
+import { MockdLogo } from '../components/common';
 
 export function Login() {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ export function Login() {
       <div className="flex-1 bg-base-100 flex items-center justify-center px-4">
         <div className="max-w-md w-full">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-base-content">mockd</h1>
+            <MockdLogo size="md" className="mx-auto" />
           </div>
 
           <div className="card bg-base-200 shadow-sm">
@@ -109,7 +110,7 @@ export function Login() {
     <div className="flex-1 bg-base-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-base-content">mockd</h1>
+          <MockdLogo size="md" className="mx-auto" />
           <p className="mt-2 text-base-content/70">Sign in to your account</p>
         </div>
 
