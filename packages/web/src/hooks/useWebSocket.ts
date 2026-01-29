@@ -5,7 +5,7 @@ import type {
   ServerMessage,
   RequestMessage,
   HistoryMessage
-} from '@relay/shared';
+} from '@mockd/shared';
 import { getEndpointWebSocketUrl } from '../config';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';

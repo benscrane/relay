@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import type { User, LoginRequest, RegisterRequest } from '@relay/shared';
+import type { User, LoginRequest, RegisterRequest } from '@mockd/shared';
 import { getApiBaseUrl } from '../config';
 
 interface AuthContextValue {

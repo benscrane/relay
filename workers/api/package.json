@@ -1,17 +1,17 @@
 {
-  "name": "@relay/api",
+  "name": "@mockd/api",
   "version": "0.0.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "db:migrate": "for f in ../../migrations/*.sql; do wrangler d1 execute relay-db --local --file=\"$f\"; done",
+    "db:migrate": "for f in ../../migrations/*.sql; do wrangler d1 execute mockd-db --local --file=\"$f\"; done",
     "db:reset": "rm -rf .wrangler/state/v3/d1 && pnpm db:migrate",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@relay/shared": "workspace:*",
+    "@mockd/shared": "workspace:*",
     "hono": "^4.2.0"
   },
   "devDependencies": {

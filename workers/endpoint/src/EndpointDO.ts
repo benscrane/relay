@@ -1,16 +1,16 @@
-import { matchPath, normalizePath, generateId, generateRuleId, matchRule, interpolateParams, calculatePathSpecificity } from '@relay/shared/utils';
-import type { RequestContext } from '@relay/shared/utils';
+import { matchPath, normalizePath, generateId, generateRuleId, matchRule, interpolateParams, calculatePathSpecificity } from '@mockd/shared/utils';
+import type { RequestContext } from '@mockd/shared/utils';
 import type {
   ClientMessage,
   ServerMessage,
   RequestLog,
-} from '@relay/shared/types/websocket';
+} from '@mockd/shared/types/websocket';
 import type {
   MockRule,
   DbMockRule,
   CreateMockRuleRequest,
   UpdateMockRuleRequest,
-} from '@relay/shared/types/mock-rule';
+} from '@mockd/shared/types/mock-rule';
 
 interface Endpoint {
   [key: string]: string | number | null;

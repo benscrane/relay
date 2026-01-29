@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { MockRule, CreateMockRuleRequest, UpdateMockRuleRequest } from '@relay/shared';
+import type { MockRule, CreateMockRuleRequest, UpdateMockRuleRequest } from '@mockd/shared';
 import { getApiBaseUrl } from '../config';
 
 interface UseRulesReturn {

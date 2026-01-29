@@ -60,7 +60,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 migrations apply relay-db --remote
+          command: d1 migrations apply mockd-db --remote
 
       - name: Deploy Endpoint Worker
         uses: cloudflare/wrangler-action@v3
@@ -83,4 +83,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy packages/web/dist --project-name=relay-web
+          command: pages deploy packages/web/dist --project-name=mockd-web

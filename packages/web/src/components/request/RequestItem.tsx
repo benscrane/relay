@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { RequestLog } from '@relay/shared';
+import type { RequestLog } from '@mockd/shared';
 import { MethodBadge } from '../common/MethodBadge';
 import { RequestDetails } from './RequestDetails';
 

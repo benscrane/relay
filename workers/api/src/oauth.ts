@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { setCookie } from 'hono/cookie';
-import { generateUserId } from '@relay/shared/utils';
-import type { DbUser, DbOAuthState, DbOAuthConnection } from '@relay/shared/types';
+import { generateUserId } from '@mockd/shared/utils';
+import type { DbUser, DbOAuthState, DbOAuthConnection } from '@mockd/shared/types';
 import type { Env } from './index';
 import { mapDbUserToUser } from './auth';
 
@@ -129,7 +129,7 @@ oauthRouter.get('/github/callback', async (c) => {
     headers: {
       'Authorization': `Bearer ${tokenData.access_token}`,
       'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'Relay-App',
+      'User-Agent': 'mockd-App',
     },
   });
 
@@ -142,7 +142,7 @@ oauthRouter.get('/github/callback', async (c) => {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
         'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'Relay-App',
+        'User-Agent': 'mockd-App',
       },
     });
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { CreateProjectRequest } from '@relay/shared';
+import type { CreateProjectRequest } from '@mockd/shared';
 import { getEndpointBaseUrl } from '../../config';
 
 interface ProjectFormProps {

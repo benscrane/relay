@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import type { Endpoint } from '@relay/shared';
+import type { Endpoint } from '@mockd/shared';
 import { EmptyState } from '../common/EmptyState';
 
 interface EndpointListProps {

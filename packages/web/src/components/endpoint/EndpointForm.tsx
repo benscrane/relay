@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { CreateEndpointRequest, UpdateEndpointRequest, Endpoint } from '@relay/shared';
+import type { CreateEndpointRequest, UpdateEndpointRequest, Endpoint } from '@mockd/shared';
 
 interface EndpointFormCreateProps {
   endpoint?: undefined;

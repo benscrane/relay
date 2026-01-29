@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import type { Project } from '@relay/shared';
+import type { Project } from '@mockd/shared';
 
 interface ProjectCardProps {
   project: Project;

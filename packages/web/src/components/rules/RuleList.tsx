@@ -1,4 +1,4 @@
-import type { MockRule } from '@relay/shared';
+import type { MockRule } from '@mockd/shared';
 import { MethodBadge } from '../common/MethodBadge';
 
 interface RuleListProps {

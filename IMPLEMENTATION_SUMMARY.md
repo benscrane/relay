@@ -2,7 +2,7 @@
 
 ## Overview
 
-This PR implements the core real-time functionality for the Relay mock API server, completing **Day 3-4** of the implementation plan. The feature enables real-time request logging and WebSocket broadcasting for mock endpoint requests.
+This PR implements the core real-time functionality for the mockd mock API server, completing **Day 3-4** of the implementation plan. The feature enables real-time request logging and WebSocket broadcasting for mock endpoint requests.
 
 ## What Was Implemented
 

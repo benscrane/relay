@@ -1,4 +1,4 @@
--- Initial D1 database schema for Relay
+-- Initial D1 database schema for mockd
 -- This stores user accounts, projects, and metadata (not endpoint data)
 
 -- Users table

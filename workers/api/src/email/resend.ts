@@ -13,17 +13,17 @@ export class ResendEmailService implements EmailService {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Relay <noreply@relay.dev>',
+        from: 'mockd <noreply@mockd.sh>',
         to: [to],
-        subject: 'Sign in to Relay',
+        subject: 'Sign in to mockd',
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
-            <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 24px; color: #111;">Sign in to Relay</h1>
+            <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 24px; color: #111;">Sign in to mockd</h1>
             <p style="font-size: 16px; color: #333; margin-bottom: 24px; line-height: 1.5;">
-              Click the button below to sign in to your Relay account. This link will expire in 15 minutes.
+              Click the button below to sign in to your mockd account. This link will expire in 15 minutes.
             </p>
             <a href="${magicLinkUrl}" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; font-weight: 500;">
-              Sign in to Relay
+              Sign in to mockd
             </a>
             <p style="font-size: 14px; color: #666; margin-top: 32px; line-height: 1.5;">
               If you didn't request this email, you can safely ignore it.
@@ -37,7 +37,7 @@ export class ResendEmailService implements EmailService {
             </p>
           </div>
         `,
-        text: `Sign in to Relay\n\nClick the link below to sign in to your Relay account. This link will expire in 15 minutes.\n\n${magicLinkUrl}\n\nIf you didn't request this email, you can safely ignore it.`,
+        text: `Sign in to mockd\n\nClick the link below to sign in to your mockd account. This link will expire in 15 minutes.\n\n${magicLinkUrl}\n\nIf you didn't request this email, you can safely ignore it.`,
       }),
     });
 

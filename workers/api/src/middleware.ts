@@ -1,6 +1,6 @@
 import { createMiddleware } from 'hono/factory';
 import { getCookie } from 'hono/cookie';
-import type { DbUser, DbSession, User } from '@relay/shared/types';
+import type { DbUser, DbSession, User } from '@mockd/shared/types';
 import type { Env } from './index';
 
 // Extend Hono's Variables type

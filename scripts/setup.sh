@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Setting up Relay development environment..."
+echo "Setting up mockd development environment..."
 
 # Check for required tools
 command -v node >/dev/null 2>&1 || { echo "Node.js is required but not installed."; exit 1; }
@@ -19,7 +19,7 @@ fi
 
 # Create local D1 database
 echo "Creating local D1 database..."
-pnpm wrangler d1 create relay-db --local 2>/dev/null || true
+pnpm wrangler d1 create mockd-db --local 2>/dev/null || true
 
 # Run migrations
 echo "Running database migrations..."

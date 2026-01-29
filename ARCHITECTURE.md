@@ -1,6 +1,6 @@
-# Relay Architecture
+# mockd Architecture
 
-Relay is a mock API server built on Cloudflare Workers, allowing developers to create and manage mock endpoints with real-time request logging.
+mockd is a mock API server built on Cloudflare Workers, allowing developers to create and manage mock endpoints with real-time request logging.
 
 ## Stack
 
@@ -12,7 +12,7 @@ Relay is a mock API server built on Cloudflare Workers, allowing developers to c
 ## Project Structure
 
 ```
-relay/
+mockd/
 ├── packages/
 │   ├── shared/          # Shared types, constants, utilities
 │   └── web/             # React frontend
@@ -35,7 +35,7 @@ relay/
    - Communicates with D1 for metadata, forwards to Durable Objects for endpoint data
 
 2. **Endpoint Worker** (`workers/endpoint/`)
-   - Handles mock endpoint requests (`{subdomain}.relay.dev/*`)
+   - Handles mock endpoint requests (`{subdomain}.mockd.sh/*`)
    - Routes requests to project-specific Durable Objects
    - Each project gets its own `EndpointDO` instance
 
@@ -94,6 +94,6 @@ pnpm dev
 pnpm typecheck
 
 # Deploy
-pnpm -F @relay/api deploy
-pnpm -F @relay/endpoint deploy
+pnpm -F @mockd/api deploy
+pnpm -F @mockd/endpoint deploy
 ```

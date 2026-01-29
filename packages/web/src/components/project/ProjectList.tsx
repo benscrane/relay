@@ -1,4 +1,4 @@
-import type { Project } from '@relay/shared';
+import type { Project } from '@mockd/shared';
 import { ProjectCard } from './ProjectCard';
 import { EmptyState } from '../common/EmptyState';
 

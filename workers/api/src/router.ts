@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { generateProjectId } from '@relay/shared/utils';
-import type { DbProject, Project, CreateProjectRequest, CreateEndpointRequest, UpdateEndpointRequest } from '@relay/shared/types';
+import { generateProjectId } from '@mockd/shared/utils';
+import type { DbProject, Project, CreateProjectRequest, CreateEndpointRequest, UpdateEndpointRequest } from '@mockd/shared/types';
 import type { Env } from './index';
 import { authMiddleware, requireAuth } from './middleware';
 
@@ -24,7 +24,7 @@ async function getProjectDOName(db: D1Database, projectId: string): Promise<stri
   const project = await getProjectById(db, projectId);
   if (!project) return null;
   // Anonymous projects use their ID as the DO name (accessed via /m/{id}/...)
-  // User-owned projects use their subdomain (accessed via {subdomain}.relay.dev)
+  // User-owned projects use their subdomain (accessed via {subdomain}.mockd.sh)
   return project.user_id ? project.subdomain : project.id;
 }
 
