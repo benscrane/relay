@@ -28,12 +28,9 @@ export function ProjectCard({ project, endpointCount = 0 }: ProjectCardProps) {
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-sm">
+        <div className="mt-4 text-sm">
           <span className="text-base-content/70">
             {endpointCount} {endpointCount === 1 ? 'endpoint' : 'endpoints'}
-          </span>
-          <span className="text-base-content/70 text-xs">
-            Created {new Date(project.createdAt).toLocaleDateString()}
           </span>
         </div>
       </Link>
