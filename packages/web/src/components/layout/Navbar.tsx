@@ -27,7 +27,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     <ul
                         tabIndex={-1}
                         className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-                        <li><a>USEFUL LINK</a></li>
+                        <li><a href={ROUTES.pricing()}>Pricing</a></li>
                     </ul>
                 </div>
                 <a className="btn btn-ghost" href={ROUTES.home()}>
@@ -36,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
             </div>
             <div className="navbar-center hidden lg:flex">
                 <ul className="menu menu-horizontal px-1">
-                    <li><a>USEFUL LINK</a></li>
+                    <li><a href={ROUTES.pricing()}>Pricing</a></li>
                 </ul>
             </div>
             <div className="navbar-end">

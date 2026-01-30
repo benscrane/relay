@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/layout';
-import { Home, ProjectDetail, EndpointDetail, Login, Register, AuthVerify } from './pages';
+import { Home, ProjectDetail, EndpointDetail, Login, Register, AuthVerify, Pricing } from './pages';
 import { AuthProvider } from './hooks';
 
 function App() {
@@ -15,6 +15,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/auth/verify" element={<AuthVerify />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/projects/:projectId" element={<ProjectDetail />} />
           <Route path="/projects/:projectId/endpoints/:endpointId" element={<EndpointDetail />} />
             </Routes>
