@@ -10,7 +10,7 @@ export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { getProject, updateProject, deleteProject } = useProjects();
-  const { endpoints, loading: endpointsLoading, fetchEndpoints, createEndpoint, deleteEndpoint } = useEndpoints();
+  const { endpoints, loading: endpointsLoading, fetchEndpoints, createEndpoint } = useEndpoints();
 
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,6 @@ export function ProjectDetail() {
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
-  const [deleteEndpointId, setDeleteEndpointId] = useState<string | null>(null);
   const [showDeleteProject, setShowDeleteProject] = useState(false);
 
   useEffect(() => {
@@ -55,16 +54,6 @@ export function ProjectDetail() {
     } finally {
       setIsCreating(false);
     }
-  };
-
-  const handleDeleteEndpoint = (endpointId: string) => {
-    setDeleteEndpointId(endpointId);
-  };
-
-  const confirmDeleteEndpoint = async () => {
-    if (!projectId || !deleteEndpointId) return;
-    await deleteEndpoint(projectId, deleteEndpointId);
-    setDeleteEndpointId(null);
   };
 
   const handleEditProject = () => {
@@ -223,20 +212,9 @@ export function ProjectDetail() {
           <EndpointList
             projectId={projectId!}
             endpoints={endpoints}
-            onDelete={handleDeleteEndpoint}
           />
         )}
       </main>
-
-      <ConfirmDialog
-        isOpen={deleteEndpointId !== null}
-        title="Delete Endpoint"
-        message="Are you sure you want to delete this endpoint?"
-        confirmText="Delete"
-        variant="danger"
-        onConfirm={confirmDeleteEndpoint}
-        onCancel={() => setDeleteEndpointId(null)}
-      />
 
       <ConfirmDialog
         isOpen={showDeleteProject}

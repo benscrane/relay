@@ -1,17 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { Project, Endpoint, UpdateEndpointRequest } from '@mockd/shared';
 import { useProjects, useEndpoints, useWebSocket } from '../hooks';
 import { RequestList } from '../components/request';
 import { RulesPanel } from '../components/rules';
 import { EndpointForm } from '../components/endpoint';
-import { CopyButton } from '../components/common';
+import { CopyButton, ConfirmDialog } from '../components/common';
 import { getMockApiSubdomainUrl, getProjectDoName } from '../config';
 
 export function EndpointDetail() {
   const { projectId, endpointId } = useParams<{ projectId: string; endpointId: string }>();
+  const navigate = useNavigate();
   const { getProject } = useProjects();
-  const { endpoints, fetchEndpoints, updateEndpoint } = useEndpoints();
+  const { endpoints, fetchEndpoints, updateEndpoint, deleteEndpoint } = useEndpoints();
 
   const [project, setProject] = useState<Project | null>(null);
   const [endpoint, setEndpoint] = useState<Endpoint | null>(null);
@@ -19,6 +20,7 @@ export function EndpointDetail() {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Get the DO name for WebSocket connection (subdomain for user-owned, id for anonymous)
   const doName = useMemo(() => project ? getProjectDoName(project) : undefined, [project]);
@@ -96,6 +98,12 @@ export function EndpointDetail() {
     }
   };
 
+  const handleDeleteEndpoint = async () => {
+    if (!projectId || !endpointId) return;
+    await deleteEndpoint(projectId, endpointId);
+    navigate(`/projects/${projectId}`);
+  };
+
   return (
     <div className="min-h-screen bg-base-200">
       <header className="bg-base-100 shadow-xs">
@@ -122,6 +130,20 @@ export function EndpointDetail() {
                   Edit
                 </button>
               )}
+              <div className="dropdown dropdown-end">
+                <button tabIndex={0} className="btn btn-sm btn-ghost btn-square">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
+                </button>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40">
+                  <li>
+                    <button onClick={() => setShowDeleteConfirm(true)} className="text-error">
+                      Delete
+                    </button>
+                  </li>
+                </ul>
+              </div>
               <div className="flex items-center gap-2">
               {status === 'connected' && (
                 <span className="flex items-center gap-1.5">
@@ -203,6 +225,16 @@ export function EndpointDetail() {
           </div>
         </div>
       </main>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete Endpoint"
+        message="Are you sure you want to delete this endpoint? This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+        onConfirm={handleDeleteEndpoint}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }
