@@ -48,6 +48,17 @@ export function getMockApiUrl(doName: string): string {
 }
 
 /**
+ * Get the subdomain-style mock API URL for display
+ * @param subdomain - The project subdomain
+ */
+export function getMockApiSubdomainUrl(subdomain: string): string {
+  if (import.meta.env.DEV) {
+    return `http://localhost:8788/m/${subdomain}`;
+  }
+  return `https://${subdomain}.mockd.sh`;
+}
+
+/**
  * Get the DO name for a project (used in URL paths)
  * Anonymous projects use their ID, user-owned projects use their subdomain
  */

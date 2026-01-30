@@ -5,7 +5,7 @@ import { useProjects, useEndpoints, useWebSocket } from '../hooks';
 import { RequestList } from '../components/request';
 import { RulesPanel } from '../components/rules';
 import { CopyButton } from '../components/common';
-import { getMockApiUrl, getProjectDoName } from '../config';
+import { getMockApiSubdomainUrl, getProjectDoName } from '../config';
 
 export function EndpointDetail() {
   const { projectId, endpointId } = useParams<{ projectId: string; endpointId: string }>();
@@ -78,7 +78,7 @@ export function EndpointDetail() {
     );
   }
 
-  const endpointUrl = getMockApiUrl(getProjectDoName(project)) + endpoint.path;
+  const endpointUrl = getMockApiSubdomainUrl(project.subdomain) + endpoint.path;
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -114,12 +114,12 @@ export function EndpointDetail() {
 
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <div className="card bg-base-100 shadow-sm mb-6 p-4">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
               <label className="text-sm text-base-content/70 block mb-1">Endpoint URL</label>
-              <code className="text-sm font-mono text-base-content">{endpointUrl}</code>
+              <code className="text-sm font-mono text-base-content block truncate">{endpointUrl}</code>
             </div>
-            <CopyButton text={endpointUrl} label="Copy URL" />
+            <CopyButton text={endpointUrl} label="Copy URL" iconOnly className="shrink-0" />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-4 pt-4 border-t border-base-200">
             <div>

@@ -4,7 +4,7 @@ import type { Project, CreateEndpointRequest } from '@mockd/shared';
 import { useProjects, useEndpoints } from '../hooks';
 import { EndpointList, EndpointForm } from '../components/endpoint';
 import { CopyButton } from '../components/common';
-import { getMockApiUrl, getProjectDoName } from '../config';
+import { getMockApiSubdomainUrl } from '../config';
 
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -89,7 +89,7 @@ export function ProjectDetail() {
     );
   }
 
-  const endpointBaseUrl = getMockApiUrl(getProjectDoName(project));
+  const endpointBaseUrl = getMockApiSubdomainUrl(project.subdomain);
 
   return (
     <div className="min-h-screen bg-base-200">
