@@ -118,18 +118,7 @@ export function EndpointDetail() {
               <h1 className="text-xl font-bold text-base-content font-mono">{endpoint.path}</h1>
               <p className="text-sm text-base-content/70">{project.name}</p>
             </div>
-            <div className="ml-auto flex items-center gap-4">
-              {!isEditing && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="btn btn-sm btn-ghost"
-                >
-                  <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit
-                </button>
-              )}
+            <div className="ml-auto">
               <div className="dropdown dropdown-end">
                 <button tabIndex={0} className="btn btn-sm btn-ghost btn-square">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -137,26 +126,19 @@ export function EndpointDetail() {
                   </svg>
                 </button>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40">
+                  {!isEditing && (
+                    <li>
+                      <button onClick={() => setIsEditing(true)}>
+                        Edit
+                      </button>
+                    </li>
+                  )}
                   <li>
                     <button onClick={() => setShowDeleteConfirm(true)} className="text-error">
                       Delete
                     </button>
                   </li>
                 </ul>
-              </div>
-              <div className="flex items-center gap-2">
-              {status === 'connected' && (
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 bg-success rounded-full animate-pulse" />
-                  <span className="text-xs text-base-content/70">Live</span>
-                </span>
-              )}
-              {status === 'connecting' && (
-                <span className="text-xs text-base-content/70">Connecting...</span>
-              )}
-              {status === 'disconnected' && (
-                <span className="text-xs text-error">Disconnected</span>
-              )}
               </div>
             </div>
           </div>
