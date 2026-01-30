@@ -27,6 +27,9 @@ jobs:
       - name: Type check
         run: pnpm typecheck
 
+      - name: Test
+        run: pnpm --filter @mockd/api test
+
       - name: Build
         run: pnpm build
 
