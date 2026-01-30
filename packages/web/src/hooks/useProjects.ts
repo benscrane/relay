@@ -17,6 +17,7 @@ interface UseProjectsReturn {
   getProject: (projectId: string) => Promise<Project>;
   createProject: (data: CreateProjectRequest) => Promise<Project>;
   createAnonymousProject: () => Promise<Project>;
+  updateProject: (projectId: string, data: { name?: string }) => Promise<Project>;
   deleteProject: (projectId: string) => Promise<void>;
   clearProjects: () => void;
 }
@@ -158,6 +159,27 @@ export function useProjects(): UseProjectsReturn {
     return newProject;
   }, []);
 
+  const updateProject = useCallback(async (projectId: string, data: { name?: string }): Promise<Project> => {
+    const response = await fetch(`${getApiBaseUrl()}/api/projects/${projectId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const json = await response.json().catch(() => ({}));
+      throw new Error(json.error || 'Failed to update project');
+    }
+
+    const json = await response.json();
+    const updatedProject = json.data as Project;
+
+    setProjects(prev => prev.map(p => p.id === projectId ? updatedProject : p));
+
+    return updatedProject;
+  }, []);
+
   const deleteProject = useCallback(async (projectId: string): Promise<void> => {
     const response = await fetch(`${getApiBaseUrl()}/api/projects/${projectId}`, {
       method: 'DELETE',
@@ -187,6 +209,7 @@ export function useProjects(): UseProjectsReturn {
     getProject,
     createProject,
     createAnonymousProject,
+    updateProject,
     deleteProject,
     clearProjects,
   };

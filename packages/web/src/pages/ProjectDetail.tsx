@@ -9,7 +9,7 @@ import { getMockApiSubdomainUrl } from '../config';
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const { getProject, deleteProject } = useProjects();
+  const { getProject, updateProject, deleteProject } = useProjects();
   const { endpoints, loading: endpointsLoading, fetchEndpoints, createEndpoint, deleteEndpoint } = useEndpoints();
 
   const [project, setProject] = useState<Project | null>(null);
@@ -17,6 +17,8 @@ export function ProjectDetail() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
 
   useEffect(() => {
     if (!projectId) return;
@@ -61,6 +63,29 @@ export function ProjectDetail() {
     }
   };
 
+  const handleEditProject = () => {
+    if (!project) return;
+    setEditName(project.name);
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!projectId || !editName.trim()) return;
+
+    try {
+      const updated = await updateProject(projectId, { name: editName.trim() });
+      setProject(updated);
+      setIsEditing(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update project');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditName('');
+  };
+
   const handleDeleteProject = async () => {
     if (!projectId || !project) return;
 
@@ -103,7 +128,25 @@ export function ProjectDetail() {
                 </svg>
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-base-content">{project.name}</h1>
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="input input-bordered input-sm"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveEdit();
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                    />
+                    <button onClick={handleSaveEdit} className="btn btn-primary btn-sm">Save</button>
+                    <button onClick={handleCancelEdit} className="btn btn-ghost btn-sm">Cancel</button>
+                  </div>
+                ) : (
+                  <h1 className="text-xl font-bold text-base-content">{project.name}</h1>
+                )}
                 <p className="text-sm text-base-content/70">
                   <code className="text-xs bg-base-200 px-1.5 py-0.5 rounded-sm">{project.subdomain}</code>
                   {!project.userId && (
@@ -119,6 +162,11 @@ export function ProjectDetail() {
                 </svg>
               </label>
               <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                <li>
+                  <button onClick={handleEditProject}>
+                    Edit Project
+                  </button>
+                </li>
                 <li>
                   <button onClick={handleDeleteProject} className="text-error">
                     Delete Project

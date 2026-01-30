@@ -165,6 +165,38 @@ router.get('/projects/:id', async (c) => {
   return c.json({ data: mapDbProjectToProject(project) });
 });
 
+router.put('/projects/:id', async (c) => {
+  const projectId = c.req.param('id');
+  const userId = c.get('userId');
+  const project = await getProjectById(c.env.DB, projectId);
+
+  if (!project) {
+    return c.json({ error: 'Project not found' }, 404);
+  }
+
+  // Check ownership: only owner can update user-owned projects
+  // Anonymous projects can be updated by anyone (they're ephemeral)
+  if (project.user_id && project.user_id !== userId) {
+    return c.json({ error: 'Project not found' }, 404);
+  }
+
+  const body = await c.req.json<{ name?: string }>();
+  const now = new Date().toISOString();
+
+  if (body.name !== undefined) {
+    await c.env.DB.prepare(
+      'UPDATE projects SET name = ?, updated_at = ? WHERE id = ?'
+    ).bind(body.name, now, projectId).run();
+  }
+
+  const updatedProject = await getProjectById(c.env.DB, projectId);
+  if (!updatedProject) {
+    return c.json({ error: 'Failed to update project' }, 500);
+  }
+
+  return c.json({ data: mapDbProjectToProject(updatedProject) });
+});
+
 router.delete('/projects/:id', async (c) => {
   const projectId = c.req.param('id');
   const userId = c.get('userId');
