@@ -6,7 +6,7 @@ import { RequestList } from '../components/request';
 import { RulesPanel } from '../components/rules';
 import { EndpointForm } from '../components/endpoint';
 import { CopyButton } from '../components/common';
-import { getMockApiUrl, getProjectDoName } from '../config';
+import { getMockApiSubdomainUrl, getProjectDoName } from '../config';
 
 export function EndpointDetail() {
   const { projectId, endpointId } = useParams<{ projectId: string; endpointId: string }>();
@@ -81,7 +81,7 @@ export function EndpointDetail() {
     );
   }
 
-  const endpointUrl = getMockApiUrl(getProjectDoName(project)) + endpoint.path;
+  const endpointUrl = getMockApiSubdomainUrl(project.subdomain) + endpoint.path;
 
   const handleUpdateEndpoint = async (data: UpdateEndpointRequest) => {
     if (!projectId || !endpointId) return;
@@ -154,12 +154,12 @@ export function EndpointDetail() {
           </div>
         ) : (
           <div className="card bg-base-100 shadow-sm mb-6 p-4">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
                 <label className="text-sm text-base-content/70 block mb-1">Endpoint URL</label>
-                <code className="text-sm font-mono text-base-content">{endpointUrl}</code>
+                <code className="text-sm font-mono text-base-content block truncate">{endpointUrl}</code>
               </div>
-              <CopyButton text={endpointUrl} label="Copy URL" />
+              <CopyButton text={endpointUrl} label="Copy URL" iconOnly className="shrink-0" />
             </div>
             <div className="mt-4 grid grid-cols-2 gap-4 pt-4 border-t border-base-200">
               <div>

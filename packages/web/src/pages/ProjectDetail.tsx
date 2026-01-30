@@ -4,7 +4,7 @@ import type { Project, CreateEndpointRequest } from '@mockd/shared';
 import { useProjects, useEndpoints } from '../hooks';
 import { EndpointList, EndpointForm } from '../components/endpoint';
 import { CopyButton } from '../components/common';
-import { getMockApiUrl, getProjectDoName } from '../config';
+import { getMockApiSubdomainUrl } from '../config';
 
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -89,7 +89,7 @@ export function ProjectDetail() {
     );
   }
 
-  const endpointBaseUrl = getMockApiUrl(getProjectDoName(project));
+  const endpointBaseUrl = getMockApiSubdomainUrl(project.subdomain);
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -124,12 +124,12 @@ export function ProjectDetail() {
 
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <div className="card bg-base-100 shadow-sm mb-6 p-4">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
               <label className="text-sm text-base-content/70 block mb-1">Mock API URL</label>
-              <code className="text-sm font-mono text-base-content">{endpointBaseUrl}</code>
+              <code className="text-sm font-mono text-base-content block truncate">{endpointBaseUrl}</code>
             </div>
-            <CopyButton text={endpointBaseUrl} label="Copy URL" />
+            <CopyButton text={endpointBaseUrl} label="Copy URL" iconOnly className="shrink-0" />
           </div>
         </div>
 
