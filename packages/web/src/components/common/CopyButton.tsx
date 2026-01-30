@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import toast from 'react-hot-toast';
 
 interface CopyButtonProps {
   text: string;
@@ -15,8 +16,8 @@ export function CopyButton({ text, label = 'Copy', className = '', iconOnly = fa
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
+    } catch {
+      toast.error('Copy failed. Try using HTTPS.');
     }
   }, [text]);
 

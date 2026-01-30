@@ -31,7 +31,17 @@ export function RequestList({ requests, status, onClear }: RequestListProps) {
       </div>
 
       <div className="max-h-[600px] overflow-y-auto">
-        {requests.length === 0 ? (
+        {status === 'connecting' ? (
+          <div className="px-4 py-12 text-center text-base-content/50">
+            <span className="loading loading-spinner loading-md mb-2" />
+            <p className="text-sm">Connecting to request stream...</p>
+          </div>
+        ) : status === 'error' || status === 'disconnected' ? (
+          <div className="px-4 py-12 text-center text-base-content/50">
+            <p className="mb-2 text-warning">Connection lost</p>
+            <p className="text-sm">Attempting to reconnect...</p>
+          </div>
+        ) : requests.length === 0 ? (
           <div className="px-4 py-12 text-center text-base-content/50">
             <p className="mb-2">No requests yet</p>
             <p className="text-sm">
