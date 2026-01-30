@@ -73,6 +73,17 @@ export function removeAnonymousProjectId(projectId: string): void {
 }
 
 /**
+ * Clear all anonymous projects from localStorage
+ */
+export function clearAllAnonymousProjects(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+/**
  * Check if a project ID is in the anonymous projects list
  */
 export function isAnonymousProjectOwned(projectId: string): boolean {

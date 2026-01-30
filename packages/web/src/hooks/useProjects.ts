@@ -5,6 +5,7 @@ import {
   addAnonymousProjectId,
   removeAnonymousProjectId,
   getAnonymousProjectIds,
+  clearAllAnonymousProjects,
 } from '../utils/anonymousProjects';
 
 interface UseProjectsReturn {
@@ -111,6 +112,29 @@ export function useProjects(): UseProjectsReturn {
   }, []);
 
   const createAnonymousProject = useCallback(async (name?: string): Promise<Project> => {
+    // Only one anonymous project allowed per browser
+    // Delete any existing anonymous projects before creating a new one
+    const existingIds = getAnonymousProjectIds();
+    if (existingIds.length > 0) {
+      // Delete existing anonymous projects from the server (ignore errors)
+      await Promise.all(
+        existingIds.map(async (id) => {
+          try {
+            await fetch(`${getApiBaseUrl()}/api/projects/${id}`, {
+              method: 'DELETE',
+              credentials: 'include',
+            });
+          } catch {
+            // Ignore deletion errors - project may already be gone
+          }
+        })
+      );
+      // Clear localStorage
+      clearAllAnonymousProjects();
+      // Remove from local state
+      setProjects(prev => prev.filter(p => !existingIds.includes(p.id)));
+    }
+
     const response = await fetch(`${getApiBaseUrl()}/api/projects/anonymous`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
