@@ -3,14 +3,16 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useProjects, useAuth } from '../hooks';
 import { ProjectList, ProjectForm } from '../components/project';
 import { getApiBaseUrl } from '../config';
+import type { Project } from '@mockd/shared';
 
 export function Home() {
   const navigate = useNavigate();
   const { user, logout, loading: authLoading } = useAuth();
-  const { projects, loading, error, fetchProjects, createProject, createAnonymousProject, deleteProject, clearProjects } = useProjects();
+  const { projects, loading, error, fetchProjects, fetchAnonymousProjects, createProject, createAnonymousProject, deleteProject, clearProjects } = useProjects();
   const [showForm, setShowForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [endpointCounts, setEndpointCounts] = useState<Record<string, number>>({});
+  const [anonymousProjects, setAnonymousProjects] = useState<Project[]>([]);
 
   // Fetch endpoint counts for all projects
   const fetchEndpointCounts = useCallback(async (projectIds: string[]) => {
@@ -39,6 +41,15 @@ export function Home() {
     fetchProjects();
   }, [fetchProjects]);
 
+  // Fetch anonymous projects from localStorage
+  useEffect(() => {
+    const loadAnonymousProjects = async () => {
+      const anon = await fetchAnonymousProjects();
+      setAnonymousProjects(anon);
+    };
+    loadAnonymousProjects();
+  }, [fetchAnonymousProjects]);
+
   // Clear projects when user logs out
   useEffect(() => {
     if (!user && !authLoading) {
@@ -46,12 +57,16 @@ export function Home() {
     }
   }, [user, authLoading, clearProjects]);
 
+  // Combine authenticated projects with anonymous projects
+  const allProjects = [...projects, ...anonymousProjects];
+
   // Fetch endpoint counts when projects change
   useEffect(() => {
-    if (projects.length > 0) {
-      fetchEndpointCounts(projects.map(p => p.id));
+    const allIds = [...projects.map(p => p.id), ...anonymousProjects.map(p => p.id)];
+    if (allIds.length > 0) {
+      fetchEndpointCounts(allIds);
     }
-  }, [projects, fetchEndpointCounts]);
+  }, [projects, anonymousProjects, fetchEndpointCounts]);
 
   const handleLogout = async () => {
     await logout();
@@ -73,6 +88,8 @@ export function Home() {
     setIsCreating(true);
     try {
       const project = await createAnonymousProject();
+      // Add to anonymous projects list
+      setAnonymousProjects(prev => [...prev, project]);
       navigate(`/projects/${project.id}`);
     } catch (err) {
       console.error('Failed to create anonymous project:', err);
@@ -84,6 +101,8 @@ export function Home() {
   const handleDelete = async (projectId: string) => {
     if (window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
       await deleteProject(projectId);
+      // Also remove from anonymous projects state if it was there
+      setAnonymousProjects(prev => prev.filter(p => p.id !== projectId));
     }
   };
 
@@ -136,11 +155,11 @@ export function Home() {
           </div>
         )}
 
-        {loading && projects.length === 0 ? (
+        {loading && allProjects.length === 0 ? (
           <div className="text-center py-12 text-base-content/70">Loading projects...</div>
         ) : (
           <ProjectList
-            projects={projects}
+            projects={allProjects}
             endpointCounts={endpointCounts}
             onDelete={handleDelete}
           />

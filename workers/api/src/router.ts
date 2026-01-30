@@ -51,16 +51,17 @@ function mapDbProjectToProject(dbProject: DbProject): Project {
 router.get('/projects', async (c) => {
   const userId = c.get('userId');
 
-  // If authenticated, show user's projects. Otherwise show anonymous projects only.
+  // Only show user's authenticated projects
+  // Anonymous projects are private and fetched individually by ID (stored in browser localStorage)
   let result;
   if (userId) {
     result = await c.env.DB.prepare(
-      'SELECT * FROM projects WHERE user_id = ? OR user_id IS NULL ORDER BY created_at DESC'
+      'SELECT * FROM projects WHERE user_id = ? ORDER BY created_at DESC'
     ).bind(userId).all<DbProject>();
   } else {
-    result = await c.env.DB.prepare(
-      'SELECT * FROM projects WHERE user_id IS NULL ORDER BY created_at DESC'
-    ).all<DbProject>();
+    // Unauthenticated users don't see any projects in the listing
+    // They can still access their anonymous projects by ID
+    return c.json({ data: [] });
   }
 
   const projects = (result.results ?? []).map(mapDbProjectToProject);

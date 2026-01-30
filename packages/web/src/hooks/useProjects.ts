@@ -1,12 +1,18 @@
 import { useState, useCallback } from 'react';
 import type { Project, CreateProjectRequest } from '@mockd/shared';
 import { getApiBaseUrl } from '../config';
+import {
+  addAnonymousProjectId,
+  removeAnonymousProjectId,
+  getAnonymousProjectIds,
+} from '../utils/anonymousProjects';
 
 interface UseProjectsReturn {
   projects: Project[];
   loading: boolean;
   error: string | null;
   fetchProjects: () => Promise<void>;
+  fetchAnonymousProjects: () => Promise<Project[]>;
   getProject: (projectId: string) => Promise<Project>;
   createProject: (data: CreateProjectRequest) => Promise<Project>;
   createAnonymousProject: () => Promise<Project>;
@@ -39,6 +45,35 @@ export function useProjects(): UseProjectsReturn {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Fetch anonymous projects stored in localStorage
+  const fetchAnonymousProjects = useCallback(async (): Promise<Project[]> => {
+    const anonymousIds = getAnonymousProjectIds();
+    if (anonymousIds.length === 0) return [];
+
+    const projects: Project[] = [];
+
+    await Promise.all(
+      anonymousIds.map(async (id) => {
+        try {
+          const response = await fetch(`${getApiBaseUrl()}/api/projects/${id}`, {
+            credentials: 'include',
+          });
+          if (response.ok) {
+            const json = await response.json();
+            projects.push(json.data as Project);
+          } else {
+            // Project no longer exists, remove from localStorage
+            removeAnonymousProjectId(id);
+          }
+        } catch {
+          // Ignore individual fetch errors
+        }
+      })
+    );
+
+    return projects;
   }, []);
 
   const getProject = useCallback(async (projectId: string): Promise<Project> => {
@@ -91,6 +126,9 @@ export function useProjects(): UseProjectsReturn {
     const json = await response.json();
     const newProject = json.data as Project;
 
+    // Store in localStorage so user can access it later
+    addAnonymousProjectId(newProject.id);
+
     setProjects(prev => [...prev, newProject]);
 
     return newProject;
@@ -106,6 +144,9 @@ export function useProjects(): UseProjectsReturn {
       throw new Error('Failed to delete project');
     }
 
+    // Remove from localStorage if it was an anonymous project
+    removeAnonymousProjectId(projectId);
+
     setProjects(prev => prev.filter(p => p.id !== projectId));
   }, []);
 
@@ -118,6 +159,7 @@ export function useProjects(): UseProjectsReturn {
     loading,
     error,
     fetchProjects,
+    fetchAnonymousProjects,
     getProject,
     createProject,
     createAnonymousProject,
