@@ -1,7 +1,7 @@
 export const TIER_LIMITS = {
   free: {
     projects: 3,
-    endpointsPerProject: 10,
+    endpointsPerProject: 3,
     requestsPerDay: 1000,
     logRetentionDays: 1,
     maxResponseSize: 64 * 1024, // 64KB
@@ -9,7 +9,7 @@ export const TIER_LIMITS = {
   },
   pro: {
     projects: 25,
-    endpointsPerProject: 100,
+    endpointsPerProject: 25,
     requestsPerDay: 100000,
     logRetentionDays: 7,
     maxResponseSize: 1024 * 1024, // 1MB
@@ -17,7 +17,7 @@ export const TIER_LIMITS = {
   },
   team: {
     projects: 100,
-    endpointsPerProject: 500,
+    endpointsPerProject: 100,
     requestsPerDay: 1000000,
     logRetentionDays: 30,
     maxResponseSize: 5 * 1024 * 1024, // 5MB

@@ -206,15 +206,44 @@ router.get('/projects/:projectId/endpoints', async (c) => {
 
 router.post('/projects/:projectId/endpoints', async (c) => {
   const projectId = c.req.param('projectId');
-  const subdomain = await getProjectDOName(c.env.DB, projectId);
+  const project = await getProjectById(c.env.DB, projectId);
 
-  if (!subdomain) {
+  if (!project) {
     return c.json({ error: 'Project not found' }, 404);
+  }
+
+  const subdomain = project.user_id ? project.subdomain : project.id;
+
+  // Determine user tier for endpoint limit
+  let userTier: Tier = 'free';
+  if (project.user_id) {
+    const user = await c.env.DB.prepare('SELECT * FROM users WHERE id = ?')
+      .bind(project.user_id)
+      .first<{ tier: string }>();
+    userTier = (user?.tier || 'free') as Tier;
+  }
+
+  const stub = getDOStub(c.env, subdomain);
+
+  // Check endpoint limit before creating
+  const endpointsResponse = await stub.fetch(
+    new Request('http://internal/__internal/endpoints')
+  );
+  const endpointsData = await endpointsResponse.json() as { data: unknown[] };
+  const currentEndpointCount = endpointsData.data?.length ?? 0;
+  const endpointLimit = TIER_LIMITS[userTier].endpointsPerProject;
+
+  if (currentEndpointCount >= endpointLimit) {
+    return c.json({
+      error: `Endpoint limit reached. ${userTier === 'free' ? 'Free tier' : `Your ${userTier} plan`} is limited to ${endpointLimit} endpoints per project. Upgrade your plan to create more.`,
+      code: 'ENDPOINT_LIMIT_REACHED',
+      limit: endpointLimit,
+      currentCount: currentEndpointCount,
+    }, 403);
   }
 
   const body = await c.req.json<CreateEndpointRequest>();
 
-  const stub = getDOStub(c.env, subdomain);
   const response = await stub.fetch(
     new Request('http://internal/__internal/endpoints', {
       method: 'POST',

@@ -221,6 +221,8 @@ function createMockStatement(query: string, store: MockDataStore): D1PreparedSta
 export function createMockDurableObject(): DurableObjectNamespace {
   const endpoints = new Map<string, { id: string; path: string; response_body: string; status_code: number; delay_ms: number }>();
   const rules = new Map<string, Record<string, unknown>>();
+  let endpointCounter = 0;
+  let ruleCounter = 0;
 
   const mockStub = {
     fetch: async (request: Request) => {
@@ -238,7 +240,7 @@ export function createMockDurableObject(): DurableObjectNamespace {
       // POST endpoint
       if (path === '/__internal/endpoints' && request.method === 'POST') {
         const body = await request.json() as Record<string, unknown>;
-        const id = `ep_${Date.now()}`;
+        const id = `ep_${++endpointCounter}`;
         const endpoint = {
           id,
           path: body.path as string,
@@ -305,7 +307,7 @@ export function createMockDurableObject(): DurableObjectNamespace {
       // POST rule
       if (path === '/__internal/rules' && request.method === 'POST') {
         const body = await request.json() as Record<string, unknown>;
-        const id = `rule_${Date.now()}`;
+        const id = `rule_${++ruleCounter}`;
         const rule = { id, ...body };
         rules.set(id, rule);
         return new Response(JSON.stringify({ data: rule }), {

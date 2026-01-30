@@ -591,6 +591,134 @@ describe('API Router', () => {
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
       });
+
+      it('should allow free tier user to create up to 3 endpoints', async () => {
+        const user = createTestUser(store, { id: 'user_123', tier: 'free' });
+        const project = createTestProject(store, {
+          id: 'proj_123',
+          user_id: user.id,
+          subdomain: 'test-project',
+        });
+
+        // Create 3 endpoints (the free tier limit)
+        for (let i = 1; i <= 3; i++) {
+          const request = makeRequest(`/api/projects/${project.id}/endpoints`, {
+            method: 'POST',
+            body: {
+              path: `/endpoint-${i}`,
+              responseBody: '{}',
+            },
+          });
+
+          const response = await app.fetch(request, env);
+          expect(response.status).toBe(201);
+        }
+      });
+
+      it('should return 403 when free tier user exceeds endpoint limit', async () => {
+        const user = createTestUser(store, { id: 'user_123', tier: 'free' });
+        const project = createTestProject(store, {
+          id: 'proj_123',
+          user_id: user.id,
+          subdomain: 'test-project',
+        });
+
+        // Create 3 endpoints (at the limit)
+        for (let i = 1; i <= 3; i++) {
+          const request = makeRequest(`/api/projects/${project.id}/endpoints`, {
+            method: 'POST',
+            body: {
+              path: `/endpoint-${i}`,
+              responseBody: '{}',
+            },
+          });
+          const response = await app.fetch(request, env);
+          expect(response.status).toBe(201);
+        }
+
+        // Verify 3 endpoints exist by fetching them
+        const listRequest = makeRequest(`/api/projects/${project.id}/endpoints`);
+        const listResponse = await app.fetch(listRequest, env);
+        const listData = await listResponse.json() as JsonResponse;
+        expect((listData.data as unknown[]).length).toBe(3);
+
+        // Try to create a 4th endpoint
+        const request = makeRequest(`/api/projects/${project.id}/endpoints`, {
+          method: 'POST',
+          body: {
+            path: '/endpoint-4',
+            responseBody: '{}',
+          },
+        });
+
+        const response = await app.fetch(request, env);
+        const data = await response.json() as JsonResponse;
+
+        expect(response.status).toBe(403);
+        expect(data.error).toContain('Endpoint limit reached');
+        expect(data.code).toBe('ENDPOINT_LIMIT_REACHED');
+        expect(data.limit).toBe(3);
+        expect(data.currentCount).toBe(3);
+      });
+
+      it('should allow pro tier user to create more than 3 endpoints', async () => {
+        const user = createTestUser(store, { id: 'user_pro', tier: 'pro' });
+        const project = createTestProject(store, {
+          id: 'proj_pro',
+          user_id: user.id,
+          subdomain: 'pro-project',
+        });
+
+        // Create 4 endpoints (exceeds free tier limit but within pro limit)
+        for (let i = 1; i <= 4; i++) {
+          const request = makeRequest(`/api/projects/${project.id}/endpoints`, {
+            method: 'POST',
+            body: {
+              path: `/endpoint-${i}`,
+              responseBody: '{}',
+            },
+          });
+
+          const response = await app.fetch(request, env);
+          expect(response.status).toBe(201);
+        }
+      });
+
+      it('should apply free tier limit to anonymous projects', async () => {
+        const project = createTestProject(store, {
+          id: 'proj_anon',
+          user_id: null,
+          subdomain: 'proj_anon',
+        });
+
+        // Create 3 endpoints (at the limit)
+        for (let i = 1; i <= 3; i++) {
+          const request = makeRequest(`/api/projects/${project.id}/endpoints`, {
+            method: 'POST',
+            body: {
+              path: `/endpoint-${i}`,
+              responseBody: '{}',
+            },
+          });
+          const response = await app.fetch(request, env);
+          expect(response.status).toBe(201);
+        }
+
+        // Try to create a 4th endpoint
+        const request = makeRequest(`/api/projects/${project.id}/endpoints`, {
+          method: 'POST',
+          body: {
+            path: '/endpoint-4',
+            responseBody: '{}',
+          },
+        });
+
+        const response = await app.fetch(request, env);
+        const data = await response.json() as JsonResponse;
+
+        expect(response.status).toBe(403);
+        expect(data.code).toBe('ENDPOINT_LIMIT_REACHED');
+      });
     });
 
     describe('PUT /api/projects/:projectId/endpoints/:id', () => {
