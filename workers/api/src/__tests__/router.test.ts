@@ -239,6 +239,108 @@ describe('API Router', () => {
         expect(response.status).toBe(201);
         expect((data.data as JsonResponse).subdomain).toBe('my-project');
       });
+
+      it('should allow free tier user to create up to 3 projects', async () => {
+        const user = createTestUser(store, { id: 'user_123', tier: 'free' });
+        const session = createTestSession(store, user.id, { id: 'session_abc' });
+
+        // Create 3 projects (the free tier limit)
+        for (let i = 1; i <= 3; i++) {
+          const request = makeRequest('/api/projects', {
+            method: 'POST',
+            body: {
+              name: `Project ${i}`,
+              subdomain: `project-${i}`,
+            },
+            cookie: `session=${session.id}`,
+          });
+
+          const response = await app.fetch(request, env);
+          expect(response.status).toBe(201);
+        }
+
+        // Verify all 3 projects were created
+        expect(store.projects.size).toBe(3);
+      });
+
+      it('should return 403 when free tier user exceeds project limit', async () => {
+        const user = createTestUser(store, { id: 'user_123', tier: 'free' });
+        const session = createTestSession(store, user.id, { id: 'session_abc' });
+
+        // Pre-create 3 projects (at the limit)
+        createTestProject(store, { id: 'proj_1', user_id: user.id, subdomain: 'existing-1' });
+        createTestProject(store, { id: 'proj_2', user_id: user.id, subdomain: 'existing-2' });
+        createTestProject(store, { id: 'proj_3', user_id: user.id, subdomain: 'existing-3' });
+
+        // Try to create a 4th project
+        const request = makeRequest('/api/projects', {
+          method: 'POST',
+          body: {
+            name: 'Project 4',
+            subdomain: 'project-four',
+          },
+          cookie: `session=${session.id}`,
+        });
+
+        const response = await app.fetch(request, env);
+        const data = await response.json() as JsonResponse;
+
+        expect(response.status).toBe(403);
+        expect(data.error).toContain('Project limit reached');
+        expect(data.code).toBe('PROJECT_LIMIT_REACHED');
+        expect(data.limit).toBe(3);
+        expect(data.currentCount).toBe(3);
+      });
+
+      it('should allow pro tier user to create more than 3 projects', async () => {
+        const user = createTestUser(store, { id: 'user_pro', tier: 'pro' });
+        const session = createTestSession(store, user.id, { id: 'session_pro' });
+
+        // Pre-create 3 projects
+        createTestProject(store, { id: 'proj_1', user_id: user.id, subdomain: 'pro-1' });
+        createTestProject(store, { id: 'proj_2', user_id: user.id, subdomain: 'pro-2' });
+        createTestProject(store, { id: 'proj_3', user_id: user.id, subdomain: 'pro-3' });
+
+        // Pro user should be able to create a 4th project
+        const request = makeRequest('/api/projects', {
+          method: 'POST',
+          body: {
+            name: 'Project 4',
+            subdomain: 'pro-project-4',
+          },
+          cookie: `session=${session.id}`,
+        });
+
+        const response = await app.fetch(request, env);
+        const data = await response.json() as JsonResponse;
+
+        expect(response.status).toBe(201);
+        expect((data.data as JsonResponse).name).toBe('Project 4');
+      });
+
+      it('should not count other users projects towards limit', async () => {
+        const user1 = createTestUser(store, { id: 'user_1', email: 'user1@example.com', tier: 'free' });
+        const user2 = createTestUser(store, { id: 'user_2', email: 'user2@example.com', tier: 'free' });
+        const session = createTestSession(store, user1.id, { id: 'session_1' });
+
+        // Create 3 projects for user2 (should not affect user1's limit)
+        createTestProject(store, { id: 'proj_u2_1', user_id: user2.id, subdomain: 'user2-1' });
+        createTestProject(store, { id: 'proj_u2_2', user_id: user2.id, subdomain: 'user2-2' });
+        createTestProject(store, { id: 'proj_u2_3', user_id: user2.id, subdomain: 'user2-3' });
+
+        // User1 should still be able to create their projects
+        const request = makeRequest('/api/projects', {
+          method: 'POST',
+          body: {
+            name: 'User1 Project',
+            subdomain: 'user1-project',
+          },
+          cookie: `session=${session.id}`,
+        });
+
+        const response = await app.fetch(request, env);
+        expect(response.status).toBe(201);
+      });
     });
 
     describe('POST /api/projects/anonymous', () => {

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { generateProjectId } from '@mockd/shared/utils';
 import type { DbProject, Project, CreateProjectRequest, CreateEndpointRequest, UpdateEndpointRequest } from '@mockd/shared/types';
+import { TIER_LIMITS, type Tier } from '@mockd/shared/constants';
 import type { Env } from './index';
 import { authMiddleware, requireAuth } from './middleware';
 
@@ -71,10 +72,28 @@ router.get('/projects', async (c) => {
 // Create project (requires authentication)
 router.post('/projects', requireAuth, async (c) => {
   const userId = c.get('userId')!;
+  const user = c.get('user')!;
   const body = await c.req.json<CreateProjectRequest>();
 
   if (!body.name || !body.subdomain) {
     return c.json({ error: 'name and subdomain are required' }, 400);
+  }
+
+  // Check project limit based on user tier
+  const userTier = (user.tier || 'free') as Tier;
+  const tierLimit = TIER_LIMITS[userTier].projects;
+
+  const projectCount = await c.env.DB.prepare(
+    'SELECT COUNT(*) as count FROM projects WHERE user_id = ?'
+  ).bind(userId).first<{ count: number }>();
+
+  if ((projectCount?.count ?? 0) >= tierLimit) {
+    return c.json({
+      error: `Project limit reached. ${userTier === 'free' ? 'Free tier' : `Your ${userTier} plan`} is limited to ${tierLimit} projects. Upgrade your plan to create more.`,
+      code: 'PROJECT_LIMIT_REACHED',
+      limit: tierLimit,
+      currentCount: projectCount?.count ?? 0,
+    }, 403);
   }
 
   const subdomain = body.subdomain.toLowerCase();

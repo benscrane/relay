@@ -96,6 +96,18 @@ function createMockStatement(query: string, store: MockDataStore): D1PreparedSta
         return (store.projects.get(projectId) as T) || null;
       }
 
+      // COUNT projects by user_id
+      if (q.includes('select count(*) as count from projects where user_id =')) {
+        const userId = boundValues[0] as string;
+        let count = 0;
+        for (const project of store.projects.values()) {
+          if (project.user_id === userId) {
+            count++;
+          }
+        }
+        return { count } as T;
+      }
+
       // Check if user exists (for registration)
       if (q.includes('select id from users where email =')) {
         const email = boundValues[0] as string;
