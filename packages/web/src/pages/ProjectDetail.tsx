@@ -163,14 +163,6 @@ export function ProjectDetail() {
             projectId={projectId!}
             endpoints={endpoints}
             onDelete={handleDeleteEndpoint}
-            emptyAction={
-              <button
-                onClick={() => setShowForm(true)}
-                className="btn btn-primary"
-              >
-                Create Endpoint
-              </button>
-            }
           />
         )}
       </main>
