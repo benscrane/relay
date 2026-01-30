@@ -8,10 +8,12 @@ import {
   createTestUser,
   createTestSession,
   makeRequest,
+  type MockDataStore,
+  type JsonResponse,
 } from './test-utils';
 
 describe('Auth Router', () => {
-  let store: ReturnType<typeof createMockDataStore>;
+  let store: MockDataStore;
   let env: Env;
   let app: Hono<{ Bindings: Env }>;
 
@@ -33,12 +35,12 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(201);
       expect(data.user).toBeDefined();
-      expect(data.user.email).toBe('newuser@example.com');
-      expect(data.user.tier).toBe('free');
+      expect((data.user as JsonResponse).email).toBe('newuser@example.com');
+      expect((data.user as JsonResponse).tier).toBe('free');
 
       // Check session cookie is set
       const setCookie = response.headers.get('Set-Cookie');
@@ -52,7 +54,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(400);
       expect(data.error).toBe('Email and password are required');
@@ -65,7 +67,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(400);
       expect(data.error).toBe('Email and password are required');
@@ -81,7 +83,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(400);
       expect(data.error).toBe('Invalid email format');
@@ -97,7 +99,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(400);
       expect(data.error).toBe('Password must be at least 8 characters');
@@ -115,7 +117,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(409);
       expect(data.error).toBe('Email already registered');
@@ -131,10 +133,10 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(201);
-      expect(data.user.email).toBe('testuser@example.com');
+      expect((data.user as JsonResponse).email).toBe('testuser@example.com');
     });
   });
 
@@ -146,7 +148,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(400);
       expect(data.error).toBe('Email and password are required');
@@ -162,7 +164,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(401);
       expect(data.error).toBe('Invalid email or password');
@@ -183,7 +185,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(401);
       expect(data.error).toBe('Invalid email or password');
@@ -201,7 +203,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -216,7 +218,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -238,7 +240,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(200);
       expect(data.user).toMatchObject({
@@ -254,7 +256,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(401);
       expect(data.error).toBe('Not authenticated');
@@ -267,7 +269,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(401);
       expect(data.error).toBe('Not authenticated');
@@ -286,7 +288,7 @@ describe('Auth Router', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(401);
       expect(data.error).toBe('Not authenticated');

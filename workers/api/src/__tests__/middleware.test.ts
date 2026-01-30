@@ -9,10 +9,8 @@ import {
   createTestSession,
   makeRequest,
   type MockDataStore,
+  type JsonResponse,
 } from './test-utils';
-
-// Helper type for test context
-type MockDataStore = ReturnType<typeof createMockDataStore>;
 
 describe('Middleware', () => {
   let store: MockDataStore;
@@ -44,7 +42,7 @@ describe('Middleware', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(200);
       expect(data.userId).toBe(user.id);
@@ -59,7 +57,7 @@ describe('Middleware', () => {
       const request = makeRequest('/test');
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(200);
       expect(data.userId).toBeNull();
@@ -78,7 +76,7 @@ describe('Middleware', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(200);
       expect(data.userId).toBeNull();
@@ -91,7 +89,7 @@ describe('Middleware', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(200);
       expect(data.userId).toBeNull();
@@ -119,7 +117,7 @@ describe('Middleware', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(200);
       expect(data.userId).toBe(user.id);
@@ -133,7 +131,7 @@ describe('Middleware', () => {
       const request = makeRequest('/protected');
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(401);
       expect(data.error).toBe('Authentication required');
@@ -145,7 +143,7 @@ describe('Middleware', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(401);
       expect(data.error).toBe('Invalid session');
@@ -163,7 +161,7 @@ describe('Middleware', () => {
       });
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(401);
       expect(data.error).toBe('Invalid session');

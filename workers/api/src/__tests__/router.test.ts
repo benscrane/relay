@@ -9,10 +9,12 @@ import {
   createTestSession,
   createTestProject,
   makeRequest,
+  type MockDataStore,
+  type JsonResponse,
 } from './test-utils';
 
 describe('API Router', () => {
-  let store: ReturnType<typeof createMockDataStore>;
+  let store: MockDataStore;
   let env: Env;
   let app: Hono<{ Bindings: Env }>;
 
@@ -29,7 +31,7 @@ describe('API Router', () => {
         const request = makeRequest('/api/projects');
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(200);
         expect(data.data).toEqual([]);
@@ -56,11 +58,11 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(200);
         expect(data.data).toHaveLength(2);
-        expect(data.data[0].name).toBeDefined();
+        expect((data.data as JsonResponse[])[0].name).toBeDefined();
       });
 
       it('should not return other users projects', async () => {
@@ -76,11 +78,11 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(200);
         expect(data.data).toHaveLength(1);
-        expect(data.data[0].id).toBe('proj_1');
+        expect((data.data as JsonResponse[])[0].id).toBe('proj_1');
       });
     });
 
@@ -99,12 +101,12 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(201);
-        expect(data.data.name).toBe('My Project');
-        expect(data.data.subdomain).toBe('my-project');
-        expect(data.data.userId).toBe(user.id);
+        expect((data.data as JsonResponse).name).toBe('My Project');
+        expect((data.data as JsonResponse).subdomain).toBe('my-project');
+        expect((data.data as JsonResponse).userId).toBe(user.id);
       });
 
       it('should return 401 when not authenticated', async () => {
@@ -117,7 +119,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(401);
         expect(data.error).toBe('Authentication required');
@@ -134,7 +136,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(400);
         expect(data.error).toBe('name and subdomain are required');
@@ -151,7 +153,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(400);
         expect(data.error).toBe('name and subdomain are required');
@@ -171,7 +173,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(400);
         expect(data.error).toContain('Invalid subdomain format');
@@ -191,7 +193,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(400);
         expect(data.error).toContain('Invalid subdomain format');
@@ -212,7 +214,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(409);
         expect(data.error).toBe('Subdomain already exists');
@@ -232,10 +234,10 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(201);
-        expect(data.data.subdomain).toBe('my-project');
+        expect((data.data as JsonResponse).subdomain).toBe('my-project');
       });
     });
 
@@ -247,11 +249,11 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(201);
-        expect(data.data.name).toBe('Anonymous Project');
-        expect(data.data.userId).toBeNull();
+        expect((data.data as JsonResponse).name).toBe('Anonymous Project');
+        expect((data.data as JsonResponse).userId).toBeNull();
         expect(data.mockUrl).toContain('/m/');
       });
 
@@ -262,10 +264,10 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(201);
-        expect(data.data.name).toBe('Untitled Mock');
+        expect((data.data as JsonResponse).name).toBe('Untitled Mock');
       });
     });
 
@@ -285,11 +287,11 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(200);
-        expect(data.data.id).toBe(project.id);
-        expect(data.data.name).toBe('My Project');
+        expect((data.data as JsonResponse).id).toBe(project.id);
+        expect((data.data as JsonResponse).name).toBe('My Project');
       });
 
       it('should return anonymous project without authentication', async () => {
@@ -303,17 +305,17 @@ describe('API Router', () => {
         const request = makeRequest(`/api/projects/${project.id}`);
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(200);
-        expect(data.data.id).toBe(project.id);
+        expect((data.data as JsonResponse).id).toBe(project.id);
       });
 
       it('should return 404 for non-existent project', async () => {
         const request = makeRequest('/api/projects/nonexistent');
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
@@ -334,7 +336,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
@@ -357,7 +359,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(200);
         expect(data.success).toBe(true);
@@ -376,7 +378,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(200);
         expect(data.success).toBe(true);
@@ -388,7 +390,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
@@ -410,7 +412,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
@@ -430,7 +432,7 @@ describe('API Router', () => {
         const request = makeRequest(`/api/projects/${project.id}/endpoints`);
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(200);
         expect(data.data).toBeInstanceOf(Array);
@@ -440,7 +442,7 @@ describe('API Router', () => {
         const request = makeRequest('/api/projects/nonexistent/endpoints');
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
@@ -466,10 +468,10 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(201);
-        expect(data.data.path).toBe('/users');
+        expect((data.data as JsonResponse).path).toBe('/users');
       });
 
       it('should return 404 for non-existent project', async () => {
@@ -482,7 +484,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
@@ -499,7 +501,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
@@ -513,7 +515,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
@@ -533,7 +535,7 @@ describe('API Router', () => {
         const request = makeRequest(`/api/projects/${project.id}/endpoints/ep_123/rules`);
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(200);
         expect(data.data).toBeInstanceOf(Array);
@@ -543,7 +545,7 @@ describe('API Router', () => {
         const request = makeRequest('/api/projects/nonexistent/endpoints/ep_123/rules');
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
@@ -568,11 +570,11 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(201);
         expect(data.data).toBeDefined();
-        expect(data.data.endpointId).toBe('ep_123');
+        expect((data.data as JsonResponse).endpointId).toBe('ep_123');
       });
 
       it('should return 404 for non-existent project', async () => {
@@ -582,7 +584,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
@@ -597,7 +599,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');
@@ -611,7 +613,7 @@ describe('API Router', () => {
         });
 
         const response = await app.fetch(request, env);
-        const data = await response.json();
+        const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(404);
         expect(data.error).toBe('Project not found');

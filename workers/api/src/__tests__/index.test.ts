@@ -1,10 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import app from '../index';
 import type { Env } from '../index';
-import { createMockDataStore, createMockEnv, makeRequest } from './test-utils';
+import {
+  createMockDataStore,
+  createMockEnv,
+  makeRequest,
+  type MockDataStore,
+  type JsonResponse,
+} from './test-utils';
 
 describe('API Worker App', () => {
-  let store: ReturnType<typeof createMockDataStore>;
+  let store: MockDataStore;
   let env: Env;
 
   beforeEach(() => {
@@ -17,7 +23,7 @@ describe('API Worker App', () => {
       const request = makeRequest('/health');
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       expect(response.status).toBe(200);
       expect(data.status).toBe('ok');
@@ -60,7 +66,7 @@ describe('API Worker App', () => {
       const request = makeRequest('/api/auth/me');
 
       const response = await app.fetch(request, env);
-      const data = await response.json();
+      const data = await response.json() as JsonResponse;
 
       // Should return 401 (not 404) indicating route exists
       expect(response.status).toBe(401);

@@ -1,7 +1,7 @@
 import type { Env } from '../index';
 
 // Mock data storage
-type MockDataStore = {
+export type MockDataStore = {
   users: Map<string, DbUser>;
   sessions: Map<string, DbSession>;
   projects: Map<string, DbProject>;
@@ -48,13 +48,16 @@ export function createMockD1(store: MockDataStore): D1Database {
     dump: () => Promise.resolve(new ArrayBuffer(0)),
     batch: () => Promise.resolve([]),
     exec: () => Promise.resolve({ count: 0, duration: 0 }),
-  } as D1Database;
+    withSession: () => {
+      throw new Error('withSession not implemented in mock');
+    },
+  } as unknown as D1Database;
 }
 
 function createMockStatement(query: string, store: MockDataStore): D1PreparedStatement {
   let boundValues: unknown[] = [];
 
-  const statement: D1PreparedStatement = {
+  const statement = {
     bind: (...values: unknown[]) => {
       boundValues = values;
       return statement;
@@ -116,12 +119,12 @@ function createMockStatement(query: string, store: MockDataStore): D1PreparedSta
             results.push(project);
           }
         }
-        return { results: results as T[], success: true, meta: {} as D1Meta };
+        return { results: results as T[], success: true, meta: {} as D1Result<T>['meta'] };
       }
 
-      return { results: [], success: true, meta: {} as D1Meta };
+      return { results: [], success: true, meta: {} as D1Result<T>['meta'] };
     },
-    run: async (): Promise<D1Result<unknown>> => {
+    run: async () => {
       const q = query.toLowerCase();
 
       // INSERT user
@@ -194,10 +197,10 @@ function createMockStatement(query: string, store: MockDataStore): D1PreparedSta
         store.projects.delete(projectId);
       }
 
-      return { success: true, meta: {} as D1Meta, results: [] };
+      return { success: true, meta: {} as D1Result<unknown>['meta'], results: [] };
     },
-    raw: async () => [],
-  };
+    raw: async () => [] as unknown[],
+  } as unknown as D1PreparedStatement;
 
   return statement;
 }
@@ -205,9 +208,9 @@ function createMockStatement(query: string, store: MockDataStore): D1PreparedSta
 // Mock Durable Object
 export function createMockDurableObject(): DurableObjectNamespace {
   const endpoints = new Map<string, { id: string; path: string; response_body: string; status_code: number; delay_ms: number }>();
-  const rules = new Map<string, unknown>();
+  const rules = new Map<string, Record<string, unknown>>();
 
-  const mockStub: Partial<DurableObjectStub> = {
+  const mockStub = {
     fetch: async (request: Request) => {
       const url = new URL(request.url);
       const path = url.pathname;
@@ -251,10 +254,11 @@ export function createMockDurableObject(): DurableObjectNamespace {
         }
         const body = await request.json() as Record<string, unknown>;
         const updated = {
-          ...existing,
-          response_body: body.response_body ?? existing.response_body,
-          status_code: body.status_code ?? existing.status_code,
-          delay_ms: body.delay_ms ?? existing.delay_ms,
+          id: existing.id,
+          path: existing.path,
+          response_body: (body.response_body as string | undefined) ?? existing.response_body,
+          status_code: (body.status_code as number | undefined) ?? existing.status_code,
+          delay_ms: (body.delay_ms as number | undefined) ?? existing.delay_ms,
         };
         endpoints.set(id, updated);
         return new Response(JSON.stringify({ data: updated }), {
@@ -278,7 +282,7 @@ export function createMockDurableObject(): DurableObjectNamespace {
       if (path.startsWith('/__internal/rules') && request.method === 'GET') {
         const endpointId = url.searchParams.get('endpointId');
         const filteredRules = Array.from(rules.values()).filter(
-          (r: unknown) => (r as { endpointId: string }).endpointId === endpointId
+          (r) => r.endpointId === endpointId
         );
         return new Response(JSON.stringify({ data: filteredRules }), {
           status: 200,
@@ -302,7 +306,7 @@ export function createMockDurableObject(): DurableObjectNamespace {
       const putRuleMatch = path.match(/^\/__internal\/rules\/(.+)$/);
       if (putRuleMatch && request.method === 'PUT') {
         const id = putRuleMatch[1];
-        const existing = rules.get(id) as Record<string, unknown> | undefined;
+        const existing = rules.get(id);
         if (!existing) {
           return new Response(JSON.stringify({ error: 'Rule not found' }), {
             status: 404,
@@ -334,15 +338,16 @@ export function createMockDurableObject(): DurableObjectNamespace {
         headers: { 'Content-Type': 'application/json' },
       });
     },
-  };
+  } as unknown as DurableObjectStub;
 
   return {
     idFromName: () => ({ toString: () => 'mock-do-id' }) as DurableObjectId,
     idFromString: () => ({ toString: () => 'mock-do-id' }) as DurableObjectId,
     newUniqueId: () => ({ toString: () => 'mock-do-id' }) as DurableObjectId,
-    get: () => mockStub as DurableObjectStub,
-    jurisdiction: () => ({} as DurableObjectNamespace),
-  } as DurableObjectNamespace;
+    get: () => mockStub,
+    getByName: () => mockStub,
+    jurisdiction: () => ({}) as DurableObjectNamespace,
+  } as unknown as DurableObjectNamespace;
 }
 
 // Create mock environment
@@ -428,3 +433,6 @@ export function makeRequest(
     body: body ? JSON.stringify(body) : undefined,
   });
 }
+
+// Type helper for JSON responses
+export type JsonResponse = Record<string, unknown>;
