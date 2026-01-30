@@ -112,12 +112,20 @@ export function ProjectDetail() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleDeleteProject}
-              className="btn btn-ghost btn-sm text-error"
-            >
-              Delete Project
-            </button>
+            <div className="dropdown dropdown-end">
+              <label tabIndex={0} className="btn btn-ghost btn-sm btn-square">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                </svg>
+              </label>
+              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                <li>
+                  <button onClick={handleDeleteProject} className="text-error">
+                    Delete Project
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </header>

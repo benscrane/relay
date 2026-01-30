@@ -8,7 +8,7 @@ import type { Project } from '@mockd/shared';
 export function Home() {
   const navigate = useNavigate();
   const { user, logout, loading: authLoading } = useAuth();
-  const { projects, loading, error, fetchProjects, fetchAnonymousProjects, createProject, createAnonymousProject, deleteProject, clearProjects } = useProjects();
+  const { projects, loading, error, fetchProjects, fetchAnonymousProjects, createProject, createAnonymousProject, clearProjects } = useProjects();
   const [showForm, setShowForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [endpointCounts, setEndpointCounts] = useState<Record<string, number>>({});
@@ -98,14 +98,6 @@ export function Home() {
     }
   };
 
-  const handleDelete = async (projectId: string) => {
-    if (window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-      await deleteProject(projectId);
-      // Also remove from anonymous projects state if it was there
-      setAnonymousProjects(prev => prev.filter(p => p.id !== projectId));
-    }
-  };
-
   return (
     <div className="min-h-screen bg-base-100">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
@@ -161,7 +153,6 @@ export function Home() {
           <ProjectList
             projects={allProjects}
             endpointCounts={endpointCounts}
-            onDelete={handleDelete}
           />
         )}
       </main>

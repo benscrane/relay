@@ -4,10 +4,9 @@ import type { Project } from '@mockd/shared';
 interface ProjectCardProps {
   project: Project;
   endpointCount?: number;
-  onDelete?: (projectId: string) => void;
 }
 
-export function ProjectCard({ project, endpointCount = 0, onDelete }: ProjectCardProps) {
+export function ProjectCard({ project, endpointCount = 0 }: ProjectCardProps) {
   const isAnonymous = !project.userId;
 
   return (
@@ -38,20 +37,6 @@ export function ProjectCard({ project, endpointCount = 0, onDelete }: ProjectCar
           </span>
         </div>
       </Link>
-
-      {onDelete && (
-        <div className="border-t border-base-content px-4 py-2">
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              onDelete(project.id);
-            }}
-            className="text-sm text-warning hover:text-warning/80"
-          >
-            Delete
-          </button>
-        </div>
-      )}
     </div>
   );
 }
