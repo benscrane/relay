@@ -3,6 +3,7 @@ import type { MockRule, CreateMockRuleRequest, UpdateMockRuleRequest } from '@mo
 import { useRules } from '../../hooks/useRules';
 import { RuleList } from './RuleList';
 import { RuleForm } from './RuleForm';
+import { ConfirmDialog } from '../common';
 
 interface RulesPanelProps {
   projectId: string;
@@ -14,6 +15,7 @@ type FormMode = { type: 'closed' } | { type: 'create' } | { type: 'edit'; rule: 
 export function RulesPanel({ projectId, endpointId }: RulesPanelProps) {
   const { rules, loading, error, fetchRules, createRule, updateRule, deleteRule } = useRules();
   const [formMode, setFormMode] = useState<FormMode>({ type: 'closed' });
+  const [deleteRuleId, setDeleteRuleId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRules(projectId, endpointId);
@@ -30,10 +32,14 @@ export function RulesPanel({ projectId, endpointId }: RulesPanelProps) {
     setFormMode({ type: 'closed' });
   };
 
-  const handleDelete = async (ruleId: string) => {
-    if (window.confirm('Are you sure you want to delete this rule?')) {
-      await deleteRule(projectId, endpointId, ruleId);
-    }
+  const handleDelete = (ruleId: string) => {
+    setDeleteRuleId(ruleId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteRuleId) return;
+    await deleteRule(projectId, endpointId, deleteRuleId);
+    setDeleteRuleId(null);
   };
 
   const handleToggleActive = async (rule: MockRule) => {
@@ -99,6 +105,16 @@ export function RulesPanel({ projectId, endpointId }: RulesPanelProps) {
           onToggleActive={handleToggleActive}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={deleteRuleId !== null}
+        title="Delete Rule"
+        message="Are you sure you want to delete this rule?"
+        confirmText="Delete"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteRuleId(null)}
+      />
     </div>
   );
 }

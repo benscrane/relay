@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { Project, CreateEndpointRequest } from '@mockd/shared';
 import { useProjects, useEndpoints } from '../hooks';
 import { EndpointList, EndpointForm } from '../components/endpoint';
-import { CopyButton } from '../components/common';
+import { CopyButton, ConfirmDialog } from '../components/common';
 import { getMockApiSubdomainUrl } from '../config';
 
 export function ProjectDetail() {
@@ -19,6 +19,8 @@ export function ProjectDetail() {
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
+  const [deleteEndpointId, setDeleteEndpointId] = useState<string | null>(null);
+  const [showDeleteProject, setShowDeleteProject] = useState(false);
 
   useEffect(() => {
     if (!projectId) return;
@@ -55,12 +57,14 @@ export function ProjectDetail() {
     }
   };
 
-  const handleDeleteEndpoint = async (endpointId: string) => {
-    if (!projectId) return;
+  const handleDeleteEndpoint = (endpointId: string) => {
+    setDeleteEndpointId(endpointId);
+  };
 
-    if (window.confirm('Are you sure you want to delete this endpoint?')) {
-      await deleteEndpoint(projectId, endpointId);
-    }
+  const confirmDeleteEndpoint = async () => {
+    if (!projectId || !deleteEndpointId) return;
+    await deleteEndpoint(projectId, deleteEndpointId);
+    setDeleteEndpointId(null);
   };
 
   const handleEditProject = () => {
@@ -86,13 +90,14 @@ export function ProjectDetail() {
     setEditName('');
   };
 
-  const handleDeleteProject = async () => {
-    if (!projectId || !project) return;
+  const handleDeleteProject = () => {
+    setShowDeleteProject(true);
+  };
 
-    if (window.confirm(`Are you sure you want to delete "${project.name}"? This action cannot be undone.`)) {
-      await deleteProject(projectId);
-      navigate('/');
-    }
+  const confirmDeleteProject = async () => {
+    if (!projectId) return;
+    await deleteProject(projectId);
+    navigate('/');
   };
 
   if (loading) {
@@ -222,6 +227,26 @@ export function ProjectDetail() {
           />
         )}
       </main>
+
+      <ConfirmDialog
+        isOpen={deleteEndpointId !== null}
+        title="Delete Endpoint"
+        message="Are you sure you want to delete this endpoint?"
+        confirmText="Delete"
+        variant="danger"
+        onConfirm={confirmDeleteEndpoint}
+        onCancel={() => setDeleteEndpointId(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteProject}
+        title="Delete Project"
+        message={`Are you sure you want to delete "${project.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="danger"
+        onConfirm={confirmDeleteProject}
+        onCancel={() => setShowDeleteProject(false)}
+      />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+export { ConfirmDialog } from './ConfirmDialog';
 export { CopyButton } from './CopyButton';
 export { MethodBadge } from './MethodBadge';
 export { EmptyState } from './EmptyState';

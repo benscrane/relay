@@ -128,7 +128,7 @@ export function Home() {
           <div className="modal-box max-w-4xl">
             <form method="dialog">
               {/* if there is a button in form, it will close the modal */}
-              <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => console.log('clicked')}>✕</button>
+              <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
             </form>
             <h3 className="font-bold text-lg">New Project</h3>
             <ProjectForm
