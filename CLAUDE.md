@@ -84,3 +84,34 @@ pnpm --filter @mockd/api test:watch  # Watch mode
 Deployment is automated via GitHub Actions (`.github/workflows/deploy.yml`):
 - PRs trigger type checking, tests, and builds
 - Merges to main deploy to Cloudflare
+
+## Issue Tracking with Beads
+
+This project uses **Beads** for issue tracking - an AI-native tool that stores issues directly in the repo.
+
+### Common Commands
+
+```bash
+# List all issues
+bd list
+
+# Show issue details
+bd show <issue-id>
+
+# Create a new issue
+bd create "Description of the issue"
+
+# Update issue status
+bd update <issue-id> --status in_progress
+bd update <issue-id> --status done
+
+# Sync issues with git remote
+bd sync
+```
+
+### Workflow
+
+- Check `bd list` before starting work to see open issues
+- Use `bd update <id> --status in_progress` when starting on an issue
+- Use `bd update <id> --status done` when completing an issue
+- Run `bd sync` to sync issues with the remote repository
