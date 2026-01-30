@@ -16,7 +16,7 @@ export function ProjectCard({ project, endpointCount = 0, onDelete }: ProjectCar
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <h3 className="text-lg font-medium text-base-content truncate">
-              {project.name}
+              {project.name === 'Untitled' ? 'Anonymous' : project.name}
             </h3>
             <p className="text-sm text-neutral-content mt-1">
               <code className="text-xs bg-neutral px-1.5 py-0.5 rounded-sm">

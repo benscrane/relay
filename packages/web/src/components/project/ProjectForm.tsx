@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { CreateProjectRequest } from '@mockd/shared';
-import { getEndpointBaseUrl } from '../../config';
+import { getEndpointBaseUrl, getMockApiSubdomainUrl } from '../../config';
 
 interface ProjectFormProps {
   onSubmit: (data: CreateProjectRequest) => Promise<void>;
@@ -13,9 +13,10 @@ export function ProjectForm({ onSubmit, onCancel, isLoading }: ProjectFormProps)
   const [subdomain, setSubdomain] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Get the endpoint base URL for display (strip protocol for prefix display)
+  // Get the endpoint base URL for display
   const endpointBase = getEndpointBaseUrl();
-  const endpointDisplay = endpointBase.replace(/^https?:\/\//, '') + '/m/';
+  const isDev = import.meta.env.DEV;
+  const endpointDisplay = isDev ? endpointBase.replace(/^https?:\/\//, '') + '/m/' : '';
 
   const handleNameChange = (value: string) => {
     setName(value);
@@ -79,22 +80,41 @@ export function ProjectForm({ onSubmit, onCancel, isLoading }: ProjectFormProps)
           <span className="label-text">Identifier</span>
         </label>
         <div className="join w-full">
-          <span className="join-item px-3 py-2 bg-base-200 border border-base-300 text-base-content/70 text-sm truncate max-w-[200px] flex items-center">
-            {endpointDisplay}
-          </span>
-          <input
-            type="text"
-            id="subdomain"
-            value={subdomain}
-            onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
-            placeholder="my-api"
-            className="input input-bordered join-item flex-1"
-            disabled={isLoading}
-          />
+          {isDev ? (
+            <>
+              <span className="join-item px-3 py-2 bg-base-200 border border-base-300 text-base-content/70 text-sm truncate max-w-[200px] flex items-center">
+                {endpointDisplay}
+              </span>
+              <input
+                type="text"
+                id="subdomain"
+                value={subdomain}
+                onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
+                placeholder="my-api"
+                className="input input-bordered join-item flex-1"
+                disabled={isLoading}
+              />
+            </>
+          ) : (
+            <>
+              <input
+                type="text"
+                id="subdomain"
+                value={subdomain}
+                onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
+                placeholder="my-api"
+                className="input input-bordered join-item flex-1"
+                disabled={isLoading}
+              />
+              <span className="join-item px-3 py-2 bg-base-200 border border-base-300 text-base-content/70 text-sm flex items-center">
+                .mockd.sh
+              </span>
+            </>
+          )}
         </div>
         <label className="label">
           <span className="label-text-alt text-base-content/70">
-            Your mock endpoint URL will be: {endpointBase}/m/{subdomain || 'your-identifier'}
+            Your mock endpoint URL will be: {getMockApiSubdomainUrl(subdomain || 'your-identifier')}
           </span>
         </label>
       </div>
