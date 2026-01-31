@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { CreateEndpointRequest, UpdateEndpointRequest, Endpoint } from '@mockd/shared';
+import { JsonEditor } from '../common';
 
 interface EndpointFormCreateProps {
   endpoint?: undefined;
@@ -140,12 +141,11 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
         <label htmlFor="responseBody" className="label">
           <span className="label-text">Response Body (JSON)</span>
         </label>
-        <textarea
+        <JsonEditor
           id="responseBody"
           value={responseBody}
-          onChange={(e) => setResponseBody(e.target.value)}
+          onChange={setResponseBody}
           rows={8}
-          className="textarea textarea-bordered w-full font-mono text-sm"
           disabled={isLoading}
         />
       </div>
