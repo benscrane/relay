@@ -9,6 +9,67 @@ export const authRouter = new Hono<{ Bindings: Env }>();
 // Session duration: 30 days
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
+// Rate limiting for login attempts
+interface RateLimitResult {
+  allowed: boolean;
+  retryAfterSeconds?: number;
+}
+
+// Rate limit thresholds
+const MAX_ATTEMPTS_PER_EMAIL = 5;
+const MAX_ATTEMPTS_PER_IP = 20;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+async function checkLoginRateLimit(
+  db: D1Database,
+  email: string,
+  ip: string | undefined
+): Promise<RateLimitResult> {
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+
+  // Check failed attempts by email
+  const emailAttempts = await db.prepare(
+    `SELECT COUNT(*) as count, MIN(created_at) as oldest
+     FROM login_attempts
+     WHERE email = ? AND success = 0 AND created_at > ?`
+  ).bind(email, windowStart).first<{ count: number; oldest: string | null }>();
+
+  if (emailAttempts && emailAttempts.count >= MAX_ATTEMPTS_PER_EMAIL) {
+    const oldestTime = new Date(emailAttempts.oldest!).getTime();
+    const retryAfterSeconds = Math.ceil((oldestTime + RATE_LIMIT_WINDOW_MS - Date.now()) / 1000);
+    return { allowed: false, retryAfterSeconds: Math.max(retryAfterSeconds, 1) };
+  }
+
+  // Check failed attempts by IP (if available)
+  if (ip) {
+    const ipAttempts = await db.prepare(
+      `SELECT COUNT(*) as count, MIN(created_at) as oldest
+       FROM login_attempts
+       WHERE ip_address = ? AND success = 0 AND created_at > ?`
+    ).bind(ip, windowStart).first<{ count: number; oldest: string | null }>();
+
+    if (ipAttempts && ipAttempts.count >= MAX_ATTEMPTS_PER_IP) {
+      const oldestTime = new Date(ipAttempts.oldest!).getTime();
+      const retryAfterSeconds = Math.ceil((oldestTime + RATE_LIMIT_WINDOW_MS - Date.now()) / 1000);
+      return { allowed: false, retryAfterSeconds: Math.max(retryAfterSeconds, 1) };
+    }
+  }
+
+  return { allowed: true };
+}
+
+async function recordLoginAttempt(
+  db: D1Database,
+  email: string,
+  ip: string | undefined,
+  success: boolean
+): Promise<void> {
+  const id = crypto.randomUUID();
+  await db.prepare(
+    'INSERT INTO login_attempts (id, email, ip_address, success, created_at) VALUES (?, ?, ?, ?, ?)'
+  ).bind(id, email, ip ?? null, success ? 1 : 0, new Date().toISOString()).run();
+}
+
 // Password hashing using Web Crypto API (PBKDF2)
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -172,19 +233,34 @@ authRouter.post('/login', async (c) => {
   }
 
   const email = body.email.toLowerCase().trim();
+  const ip = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0];
+
+  // Check rate limit before attempting login
+  const rateLimit = await checkLoginRateLimit(c.env.DB, email, ip);
+  if (!rateLimit.allowed) {
+    return c.json({
+      error: 'Too many login attempts. Please try again later.',
+      retryAfter: rateLimit.retryAfterSeconds
+    }, 429);
+  }
 
   const user = await c.env.DB.prepare(
     'SELECT * FROM users WHERE email = ?'
   ).bind(email).first<DbUser>();
 
   if (!user || !user.password_hash) {
+    await recordLoginAttempt(c.env.DB, email, ip, false);
     return c.json({ error: 'Invalid email or password' }, 401);
   }
 
   const validPassword = await verifyPassword(body.password, user.password_hash);
   if (!validPassword) {
+    await recordLoginAttempt(c.env.DB, email, ip, false);
     return c.json({ error: 'Invalid email or password' }, 401);
   }
+
+  // Record successful login
+  await recordLoginAttempt(c.env.DB, email, ip, true);
 
   // Create session
   const sessionId = generateSessionId();
