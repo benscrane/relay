@@ -5,11 +5,10 @@ import { EmptyState } from '../common/EmptyState';
 interface EndpointListProps {
   projectId: string;
   endpoints: Endpoint[];
-  onDelete?: (endpointId: string) => void;
   emptyAction?: React.ReactNode;
 }
 
-export function EndpointList({ projectId, endpoints, onDelete, emptyAction }: EndpointListProps) {
+export function EndpointList({ projectId, endpoints, emptyAction }: EndpointListProps) {
   if (endpoints.length === 0) {
     return (
       <EmptyState
@@ -27,60 +26,17 @@ export function EndpointList({ projectId, endpoints, onDelete, emptyAction }: En
 
   return (
     <div className="card bg-base-100 shadow-sm overflow-hidden">
-      <table className="min-w-full divide-y divide-base-200">
-        <thead className="bg-base-200">
-          <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
-              Path
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
-              Status
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
-              Delay
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-base-content/70 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-base-100 divide-y divide-base-200">
-          {endpoints.map(endpoint => (
-            <tr key={endpoint.id} className="hover:bg-base-200">
-              <td className="px-4 py-3">
-                <Link
-                  to={`/projects/${projectId}/endpoints/${endpoint.id}`}
-                  className="text-sm font-mono link link-primary"
-                >
-                  {endpoint.path}
-                </Link>
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-base-content/70">
-                {endpoint.statusCode}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-base-content/70">
-                {endpoint.delay > 0 ? `${endpoint.delay}ms` : '-'}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
-                <Link
-                  to={`/projects/${projectId}/endpoints/${endpoint.id}`}
-                  className="link link-primary mr-3"
-                >
-                  View
-                </Link>
-                {onDelete && (
-                  <button
-                    onClick={() => onDelete(endpoint.id)}
-                    className="link link-error"
-                  >
-                    Delete
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="divide-y divide-base-200">
+        {endpoints.map(endpoint => (
+          <Link
+            key={endpoint.id}
+            to={`/projects/${projectId}/endpoints/${endpoint.id}`}
+            className="block px-4 py-3 hover:bg-base-200 transition-colors"
+          >
+            <span className="text-sm font-mono text-primary">{endpoint.path}</span>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

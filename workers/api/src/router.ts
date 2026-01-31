@@ -129,7 +129,7 @@ router.post('/projects/anonymous', async (c) => {
   const body = await c.req.json<{ name?: string }>();
   const id = generateProjectId();
   const now = new Date().toISOString();
-  const name = body.name || 'Untitled Mock';
+  const name = body.name || 'Temporary Mock';
 
   // Anonymous projects use their ID as the subdomain (for uniqueness constraint)
   // They're accessed via /m/{id}/... path-based routing
@@ -419,6 +419,28 @@ router.delete('/projects/:projectId/endpoints/:endpointId/rules/:ruleId', async 
   const stub = getDOStub(c.env, subdomain);
   const response = await stub.fetch(
     new Request(`http://internal/__internal/rules/${ruleId}`, {
+      method: 'DELETE',
+    })
+  );
+  const data = await response.json();
+
+  return c.json(data, response.status as 200);
+});
+
+// Request Logs
+
+router.delete('/projects/:projectId/endpoints/:endpointId/logs', async (c) => {
+  const projectId = c.req.param('projectId');
+  const endpointId = c.req.param('endpointId');
+  const subdomain = await getProjectDOName(c.env.DB, projectId);
+
+  if (!subdomain) {
+    return c.json({ error: 'Project not found' }, 404);
+  }
+
+  const stub = getDOStub(c.env, subdomain);
+  const response = await stub.fetch(
+    new Request(`http://internal/__internal/logs?endpointId=${endpointId}`, {
       method: 'DELETE',
     })
   );

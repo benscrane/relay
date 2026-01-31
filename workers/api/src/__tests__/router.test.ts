@@ -369,7 +369,7 @@ describe('API Router', () => {
         const data = await response.json() as JsonResponse;
 
         expect(response.status).toBe(201);
-        expect((data.data as JsonResponse).name).toBe('Untitled Mock');
+        expect((data.data as JsonResponse).name).toBe('Temporary Mock');
       });
     });
 

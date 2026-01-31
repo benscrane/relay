@@ -108,7 +108,7 @@ export function Home() {
                 disabled={isCreating}
                 className="btn btn-outline"
               >
-                Temp Project
+                Temp Mock
               </button>
               {user && (
                 <button

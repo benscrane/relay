@@ -98,7 +98,7 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
             disabled={isLoading}
           />
           <label className="label">
-            <span className="label-text-alt text-base-content/70">All HTTP methods (GET, POST, PUT, etc.) will be accepted at this path</span>
+            <span className="label-text-alt text-base-content/70 whitespace-normal">All HTTP methods (GET, POST, PUT, etc.) will be accepted at this path</span>
           </label>
         </div>
       )}

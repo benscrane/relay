@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { RequestLog } from '@mockd/shared';
 import { RequestItem } from './RequestItem';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 import type { ConnectionStatus } from '../../hooks/useWebSocket';
 
 interface RequestListProps {
@@ -9,6 +11,21 @@ interface RequestListProps {
 }
 
 export function RequestList({ requests, status, onClear }: RequestListProps) {
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  const handleClearClick = () => {
+    setShowClearConfirm(true);
+  };
+
+  const handleConfirmClear = () => {
+    onClear();
+    setShowClearConfirm(false);
+  };
+
+  const handleCancelClear = () => {
+    setShowClearConfirm(false);
+  };
+
   return (
     <div className="card bg-base-100 shadow-sm">
       <div className="px-4 py-3 border-b border-base-200 flex items-center justify-between">
@@ -22,13 +39,24 @@ export function RequestList({ requests, status, onClear }: RequestListProps) {
           )}
         </div>
         <button
-          onClick={onClear}
+          onClick={handleClearClick}
           disabled={requests.length === 0}
           className="btn btn-ghost btn-sm"
         >
           Clear
         </button>
       </div>
+
+      <ConfirmDialog
+        isOpen={showClearConfirm}
+        title="Clear Request Logs"
+        message={`Are you sure you want to clear all ${requests.length} request log${requests.length === 1 ? '' : 's'}? This action cannot be undone.`}
+        confirmText="Clear All"
+        cancelText="Cancel"
+        variant="warning"
+        onConfirm={handleConfirmClear}
+        onCancel={handleCancelClear}
+      />
 
       <div className="max-h-[600px] overflow-y-auto">
         {status === 'connecting' ? (

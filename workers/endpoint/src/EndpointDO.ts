@@ -12,13 +12,26 @@ import type {
   UpdateMockRuleRequest,
 } from '@mockd/shared/types/mock-rule';
 
-interface Endpoint {
+interface DbEndpoint {
   [key: string]: string | number | null;
   id: string;
   path: string;
   response_body: string;
   status_code: number;
   delay_ms: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ApiEndpoint {
+  id: string;
+  projectId: string;
+  path: string;
+  responseBody: string;
+  statusCode: number;
+  delay: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface RulesCache {
@@ -140,6 +153,19 @@ export class EndpointDO implements DurableObject {
     };
   }
 
+  private mapDbEndpointToEndpoint(dbEndpoint: DbEndpoint, projectId: string = ''): ApiEndpoint {
+    return {
+      id: dbEndpoint.id,
+      projectId,
+      path: dbEndpoint.path,
+      responseBody: dbEndpoint.response_body,
+      statusCode: dbEndpoint.status_code,
+      delay: dbEndpoint.delay_ms,
+      createdAt: dbEndpoint.created_at,
+      updatedAt: dbEndpoint.updated_at,
+    };
+  }
+
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
@@ -173,9 +199,11 @@ export class EndpointDO implements DurableObject {
 
     // GET /__internal/endpoints - List all endpoints
     if (path === '/__internal/endpoints' && request.method === 'GET') {
-      const endpoints = this.sql
-        .exec<Endpoint>('SELECT * FROM endpoints ORDER BY created_at DESC')
+      const dbEndpoints = this.sql
+        .exec<DbEndpoint>('SELECT * FROM endpoints ORDER BY created_at DESC')
         .toArray();
+
+      const endpoints = dbEndpoints.map(e => this.mapDbEndpointToEndpoint(e));
 
       return new Response(JSON.stringify({ data: endpoints }), {
         status: 200,
@@ -196,7 +224,7 @@ export class EndpointDO implements DurableObject {
 
       // Check if endpoint with this path already exists
       const existing = this.sql
-        .exec<Endpoint>('SELECT * FROM endpoints WHERE path = ?', body.path)
+        .exec<DbEndpoint>('SELECT * FROM endpoints WHERE path = ?', body.path)
         .toArray()[0];
 
       if (existing) {
@@ -221,11 +249,11 @@ export class EndpointDO implements DurableObject {
         now
       );
 
-      const endpoint = this.sql
-        .exec<Endpoint>('SELECT * FROM endpoints WHERE id = ?', id)
+      const dbEndpoint = this.sql
+        .exec<DbEndpoint>('SELECT * FROM endpoints WHERE id = ?', id)
         .toArray()[0];
 
-      return new Response(JSON.stringify({ data: endpoint }), {
+      return new Response(JSON.stringify({ data: this.mapDbEndpointToEndpoint(dbEndpoint) }), {
         status: 201,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -239,7 +267,7 @@ export class EndpointDO implements DurableObject {
 
       // Check if endpoint exists
       const existing = this.sql
-        .exec<Endpoint>('SELECT * FROM endpoints WHERE id = ?', endpointId)
+        .exec<DbEndpoint>('SELECT * FROM endpoints WHERE id = ?', endpointId)
         .toArray()[0];
 
       if (!existing) {
@@ -275,11 +303,11 @@ export class EndpointDO implements DurableObject {
         );
       }
 
-      const endpoint = this.sql
-        .exec<Endpoint>('SELECT * FROM endpoints WHERE id = ?', endpointId)
+      const dbEndpoint = this.sql
+        .exec<DbEndpoint>('SELECT * FROM endpoints WHERE id = ?', endpointId)
         .toArray()[0];
 
-      return new Response(JSON.stringify({ data: endpoint }), {
+      return new Response(JSON.stringify({ data: this.mapDbEndpointToEndpoint(dbEndpoint) }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -540,7 +568,7 @@ export class EndpointDO implements DurableObject {
 
     // Find matching endpoint (match on path only, not method)
     const endpoints = this.sql
-      .exec<Endpoint>('SELECT * FROM endpoints ORDER BY created_at ASC')
+      .exec<DbEndpoint>('SELECT * FROM endpoints ORDER BY created_at ASC')
       .toArray();
 
     // Sort endpoints by specificity (more specific paths first)
@@ -548,7 +576,7 @@ export class EndpointDO implements DurableObject {
       calculatePathSpecificity(b.path) - calculatePathSpecificity(a.path)
     );
 
-    let matchedEndpoint: Endpoint | undefined;
+    let matchedEndpoint: DbEndpoint | undefined;
     let endpointPathParams: Record<string, string> = {};
     for (const endpoint of sortedEndpoints) {
       const match = matchPath(endpoint.path, path);
