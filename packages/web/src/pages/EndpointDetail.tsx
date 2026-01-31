@@ -129,13 +129,13 @@ export function EndpointDetail() {
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40">
                   {!isEditing && (
                     <li>
-                      <button onClick={() => setIsEditing(true)}>
+                      <button onClick={() => { (document.activeElement as HTMLElement)?.blur(); setIsEditing(true); }}>
                         Edit
                       </button>
                     </li>
                   )}
                   <li>
-                    <button onClick={() => setShowDeleteConfirm(true)} className="text-error">
+                    <button onClick={() => { (document.activeElement as HTMLElement)?.blur(); setShowDeleteConfirm(true); }} className="text-error">
                       Delete
                     </button>
                   </li>
