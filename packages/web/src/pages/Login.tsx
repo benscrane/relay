@@ -4,15 +4,17 @@ import { useAuth } from '../hooks';
 import { ROUTES } from '../routes';
 import { MockdLogo } from '../components/common';
 
+// TODO: Re-enable magic link imports when email service is configured in production
+// import { sendMagicLink, magicLinkSent, magicLinkEmail } from useAuth when ready
+
 export function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { login, loading, error, clearError, sendMagicLink, loginWithGitHub, magicLinkSent, magicLinkEmail } = useAuth();
+  const { login, loading, error, clearError, loginWithGitHub } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPasswordLogin, setShowPasswordLogin] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
@@ -36,17 +38,17 @@ export function Login() {
     }
   }, [searchParams]);
 
-  const handleMagicLinkSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    clearError();
-    setOauthError(null);
-
-    try {
-      await sendMagicLink(email);
-    } catch {
-      // Error is handled by useAuth
-    }
-  };
+  // TODO: Re-enable magic link when email service is configured in production
+  // const handleMagicLinkSubmit = async (e: FormEvent) => {
+  //   e.preventDefault();
+  //   clearError();
+  //   setOauthError(null);
+  //   try {
+  //     await sendMagicLink(email);
+  //   } catch {
+  //     // Error is handled by useAuth
+  //   }
+  // };
 
   const handlePasswordSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -67,44 +69,39 @@ export function Login() {
     loginWithGitHub();
   };
 
-  // Show success message if magic link was sent
-  if (magicLinkSent && magicLinkEmail) {
-    return (
-      <div className="flex-1 bg-base-100 flex items-center justify-center px-4">
-        <div className="max-w-md w-full">
-          <div className="text-center mb-8">
-            <MockdLogo size="md" className="mx-auto" />
-          </div>
-
-          <div className="card bg-base-200 shadow-sm">
-            <div className="card-body text-center">
-              <div className="w-12 h-12 mx-auto mb-4 bg-success/20 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold text-base-content mb-2">Check your email</h2>
-              <p className="text-base-content/70 mb-4">
-                We sent a sign-in link to <span className="font-medium">{magicLinkEmail}</span>
-              </p>
-              <p className="text-sm text-base-content/50">
-                The link will expire in 15 minutes.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => window.location.reload()}
-              className="btn btn-ghost btn-sm"
-            >
-              Use a different email
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // TODO: Re-enable magic link success screen when email service is configured in production
+  // if (magicLinkSent && magicLinkEmail) {
+  //   return (
+  //     <div className="flex-1 bg-base-100 flex items-center justify-center px-4">
+  //       <div className="max-w-md w-full">
+  //         <div className="text-center mb-8">
+  //           <MockdLogo size="md" className="mx-auto" />
+  //         </div>
+  //         <div className="card bg-base-200 shadow-sm">
+  //           <div className="card-body text-center">
+  //             <div className="w-12 h-12 mx-auto mb-4 bg-success/20 rounded-full flex items-center justify-center">
+  //               <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  //                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  //               </svg>
+  //             </div>
+  //             <h2 className="text-xl font-semibold text-base-content mb-2">Check your email</h2>
+  //             <p className="text-base-content/70 mb-4">
+  //               We sent a sign-in link to <span className="font-medium">{magicLinkEmail}</span>
+  //             </p>
+  //             <p className="text-sm text-base-content/50">
+  //               The link will expire in 15 minutes.
+  //             </p>
+  //           </div>
+  //         </div>
+  //         <div className="mt-4 text-center">
+  //           <button onClick={() => window.location.reload()} className="btn btn-ghost btn-sm">
+  //             Use a different email
+  //           </button>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="flex-1 bg-base-100 flex items-center justify-center px-4">
@@ -135,93 +132,92 @@ export function Login() {
 
           <div className="divider">or</div>
 
-          {showPasswordLogin ? (
-            /* Password Login Form */
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div className="form-control">
-                <label htmlFor="email" className="label">
-                  <span className="label-text">Email</span>
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="input input-bordered w-full"
-                  placeholder="you@example.com"
-                />
-              </div>
+          {/* Password Login Form */}
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div className="form-control">
+              <label htmlFor="email" className="label">
+                <span className="label-text">Email</span>
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="input input-bordered w-full"
+                placeholder="you@example.com"
+              />
+            </div>
 
-              <div className="form-control">
-                <label htmlFor="password" className="label">
-                  <span className="label-text">Password</span>
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  className="input input-bordered w-full"
-                  placeholder="Enter your password"
-                />
-              </div>
+            <div className="form-control">
+              <label htmlFor="password" className="label">
+                <span className="label-text">Password</span>
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="input input-bordered w-full"
+                placeholder="Enter your password"
+              />
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn btn-primary w-full"
-              >
-                {loading ? 'Signing in...' : 'Sign in'}
-              </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary w-full"
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setShowPasswordLogin(false)}
-                className="btn btn-ghost btn-sm w-full"
-              >
-                Sign in with magic link instead
-              </button>
-            </form>
-          ) : (
-            /* Magic Link Form */
-            <form onSubmit={handleMagicLinkSubmit} className="space-y-4">
-              <div className="form-control">
-                <label htmlFor="email" className="label">
-                  <span className="label-text">Email</span>
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="input input-bordered w-full"
-                  placeholder="you@example.com"
-                />
-              </div>
+            {/* TODO: Re-enable magic link toggle when email service is configured in production
+            <button
+              type="button"
+              onClick={() => setShowPasswordLogin(false)}
+              className="btn btn-ghost btn-sm w-full"
+            >
+              Sign in with magic link instead
+            </button>
+            */}
+          </form>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn btn-primary w-full"
-              >
-                {loading ? 'Sending...' : 'Send magic link'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowPasswordLogin(true)}
-                className="btn btn-ghost btn-sm w-full"
-              >
-                Sign in with password instead
-              </button>
-            </form>
-          )}
+          {/* TODO: Re-enable magic link form when email service is configured in production
+          <form onSubmit={handleMagicLinkSubmit} className="space-y-4">
+            <div className="form-control">
+              <label htmlFor="email" className="label">
+                <span className="label-text">Email</span>
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="input input-bordered w-full"
+                placeholder="you@example.com"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary w-full"
+            >
+              {loading ? 'Sending...' : 'Send magic link'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPasswordLogin(true)}
+              className="btn btn-ghost btn-sm w-full"
+            >
+              Sign in with password instead
+            </button>
+          </form>
+          */}
 
           <div className="mt-4 text-center text-sm text-base-content/70">
             Don't have an account?{' '}
