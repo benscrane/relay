@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { MockRule, CreateMockRuleRequest, UpdateMockRuleRequest } from '@mockd/shared';
+import { JsonEditor } from '../common/JsonEditor';
 
 interface RuleFormProps {
   rule?: MockRule;
@@ -11,6 +12,16 @@ const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'
 
 function isValidJson(str: string): boolean {
   if (!str.trim()) return true;
+  try {
+    JSON.parse(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isValidJsonRequired(str: string): boolean {
+  if (!str.trim()) return false;
   try {
     JSON.parse(str);
     return true;
@@ -41,18 +52,15 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!responseBody.trim()) {
-      newErrors.responseBody = 'Response body is required';
-    } else if (!isValidJson(responseBody)) {
-      newErrors.responseBody = 'Response body must be valid JSON';
+    // JSON validation - errors shown inline by JsonEditor
+    if (!isValidJsonRequired(responseBody)) {
+      newErrors.responseBody = 'invalid';
     }
-
     if (matchHeaders && !isValidJson(matchHeaders)) {
-      newErrors.matchHeaders = 'Match headers must be valid JSON';
+      newErrors.matchHeaders = 'invalid';
     }
-
     if (responseHeaders && !isValidJson(responseHeaders)) {
-      newErrors.responseHeaders = 'Response headers must be valid JSON';
+      newErrors.responseHeaders = 'invalid';
     }
 
     const priorityNum = parseInt(priority, 10);
@@ -194,16 +202,12 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
           <label className="label">
             <span className="label-text">Match Headers (JSON)</span>
           </label>
-          <textarea
+          <JsonEditor
             value={matchHeaders}
-            onChange={(e) => setMatchHeaders(e.target.value)}
+            onChange={setMatchHeaders}
             placeholder='{"Content-Type": "application/json"}'
             rows={2}
-            className="textarea textarea-bordered w-full font-mono text-sm"
           />
-          {errors.matchHeaders && (
-            <p className="text-error text-sm mt-1">{errors.matchHeaders}</p>
-          )}
         </div>
       </div>
 
@@ -247,15 +251,11 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
           <label className="label">
             <span className="label-text">Response Body (JSON)</span>
           </label>
-          <textarea
+          <JsonEditor
             value={responseBody}
-            onChange={(e) => setResponseBody(e.target.value)}
+            onChange={setResponseBody}
             rows={4}
-            className="textarea textarea-bordered w-full font-mono text-sm"
           />
-          {errors.responseBody && (
-            <p className="text-error text-sm mt-1">{errors.responseBody}</p>
-          )}
           <label className="label">
             <span className="label-text-alt text-base-content/70">
               Use {"{{paramName}}"} to interpolate path parameters
@@ -267,16 +267,12 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
           <label className="label">
             <span className="label-text">Response Headers (JSON)</span>
           </label>
-          <textarea
+          <JsonEditor
             value={responseHeaders}
-            onChange={(e) => setResponseHeaders(e.target.value)}
+            onChange={setResponseHeaders}
             placeholder='{"X-Custom-Header": "value"}'
             rows={2}
-            className="textarea textarea-bordered w-full font-mono text-sm"
           />
-          {errors.responseHeaders && (
-            <p className="text-error text-sm mt-1">{errors.responseHeaders}</p>
-          )}
         </div>
       </div>
 
