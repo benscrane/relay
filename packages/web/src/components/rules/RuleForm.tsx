@@ -119,7 +119,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="form-control">
+        <div className="form-control min-w-0">
           <label className="label">
             <span className="label-text">Priority</span>
           </label>
@@ -133,11 +133,11 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
             <p className="text-error text-sm mt-1">{errors.priority}</p>
           )}
           <label className="label">
-            <span className="label-text-alt text-base-content/70">Higher priority rules are matched first</span>
+            <span className="label-text-alt text-base-content/70 break-words">Higher priority rules are matched first</span>
           </label>
         </div>
 
-        <div className="form-control">
+        <div className="form-control min-w-0">
           <label className="label">
             <span className="label-text">Active</span>
           </label>
@@ -157,7 +157,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
         <h4 className="font-medium text-base-content mb-3">Match Conditions</h4>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="form-control">
+          <div className="form-control min-w-0">
             <label className="label">
               <span className="label-text">HTTP Method</span>
             </label>
@@ -173,7 +173,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
             </select>
           </div>
 
-          <div className="form-control">
+          <div className="form-control min-w-0">
             <label className="label">
               <span className="label-text">Path Pattern</span>
             </label>
@@ -185,7 +185,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
               className="input input-bordered w-full"
             />
             <label className="label">
-              <span className="label-text-alt text-base-content/70">Use :paramName for path parameters</span>
+              <span className="label-text-alt text-base-content/70 break-words">Use :paramName for path parameters</span>
             </label>
           </div>
         </div>
@@ -211,7 +211,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
         <h4 className="font-medium text-base-content mb-3">Response Configuration</h4>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="form-control">
+          <div className="form-control min-w-0">
             <label className="label">
               <span className="label-text">Status Code</span>
             </label>
@@ -226,7 +226,7 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
             )}
           </div>
 
-          <div className="form-control">
+          <div className="form-control min-w-0">
             <label className="label">
               <span className="label-text">Delay (ms)</span>
             </label>
