@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { Navbar } from './components/layout';
+import { Navbar, Footer } from './components/layout';
 import { Home, ProjectDetail, EndpointDetail, Login, Register, AuthVerify, Pricing } from './pages';
 import { AuthProvider } from './hooks';
 
@@ -28,6 +28,7 @@ function App() {
           <Route path="/projects/:projectId/endpoints/:endpointId" element={<EndpointDetail />} />
             </Routes>
           </main>
+          <Footer />
         </div>
       </BrowserRouter>
     </AuthProvider>
