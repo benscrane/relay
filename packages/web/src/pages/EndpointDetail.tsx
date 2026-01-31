@@ -30,6 +30,7 @@ export function EndpointDetail() {
   const { status, requests, clearRequests } = useWebSocket({
     subdomain: doName,
     endpointId: endpointId,
+    projectId: projectId,
   });
 
   useEffect(() => {

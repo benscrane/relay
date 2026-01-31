@@ -13,6 +13,7 @@ export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'er
 export interface UseWebSocketOptions {
   subdomain?: string;
   endpointId?: string;
+  projectId?: string;
   autoConnect?: boolean;
 }
 
@@ -21,7 +22,7 @@ export interface UseWebSocketReturn {
   requests: RequestLog[];
   connect: () => void;
   disconnect: () => void;
-  clearRequests: () => void;
+  clearRequests: () => Promise<void>;
 }
 
 const MAX_REQUESTS = 100;
@@ -36,7 +37,7 @@ function getWebSocketUrl(doName: string): string {
 }
 
 export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketReturn {
-  const { subdomain, endpointId, autoConnect = true } = options;
+  const { subdomain, endpointId, projectId, autoConnect = true } = options;
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [requests, setRequests] = useState<RequestLog[]>([]);
 
@@ -185,9 +186,21 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     setStatus('disconnected');
   }, [clearTimers]);
 
-  const clearRequests = useCallback(() => {
+  const clearRequests = useCallback(async () => {
+    if (projectId && endpointId) {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/endpoints/${endpointId}/logs`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          console.error('Failed to clear logs on server');
+        }
+      } catch (err) {
+        console.error('Failed to clear logs:', err);
+      }
+    }
     setRequests([]);
-  }, []);
+  }, [projectId, endpointId]);
 
   // Auto-connect on mount or when subdomain/endpointId changes
   useEffect(() => {
