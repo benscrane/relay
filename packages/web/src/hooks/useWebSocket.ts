@@ -6,7 +6,7 @@ import type {
   RequestMessage,
   HistoryMessage
 } from '@mockd/shared';
-import { getEndpointWebSocketUrl } from '../config';
+import { getEndpointWebSocketUrl, getApiBaseUrl } from '../config';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
@@ -189,8 +189,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
   const clearRequests = useCallback(async () => {
     if (projectId && endpointId) {
       try {
-        const response = await fetch(`/api/projects/${projectId}/endpoints/${endpointId}/logs`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/projects/${projectId}/endpoints/${endpointId}/logs`, {
           method: 'DELETE',
+          credentials: 'include',
         });
         if (!response.ok) {
           console.error('Failed to clear logs on server');
