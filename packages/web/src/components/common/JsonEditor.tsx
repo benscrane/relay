@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useMemo } from 'react';
 
 interface JsonEditorProps {
   value: string;
@@ -7,6 +7,77 @@ interface JsonEditorProps {
   rows?: number;
   disabled?: boolean;
   id?: string;
+}
+
+interface JsonError {
+  message: string;
+  line: number;
+  column: number;
+}
+
+function getPositionFromOffset(text: string, offset: number): { line: number; column: number } {
+  const lines = text.slice(0, offset).split('\n');
+  return {
+    line: lines.length,
+    column: lines[lines.length - 1].length + 1,
+  };
+}
+
+function validateJson(value: string): JsonError | null {
+  if (!value.trim()) return null; // Empty is valid (for optional fields)
+  try {
+    JSON.parse(value);
+    return null;
+  } catch (e) {
+    const errorMessage = e instanceof Error ? e.message : 'Invalid JSON';
+
+    // Try to extract position from error message (varies by JS engine)
+    // Common formats: "at position 42", "at line 3 column 5"
+    const positionMatch = errorMessage.match(/position\s+(\d+)/i);
+    const lineColMatch = errorMessage.match(/line\s+(\d+)\s+column\s+(\d+)/i);
+
+    let line = 1;
+    let column = 1;
+
+    if (lineColMatch) {
+      line = parseInt(lineColMatch[1], 10);
+      column = parseInt(lineColMatch[2], 10);
+    } else if (positionMatch) {
+      const offset = parseInt(positionMatch[1], 10);
+      const pos = getPositionFromOffset(value, offset);
+      line = pos.line;
+      column = pos.column;
+    }
+
+    // Clean up the error message for display
+    const cleanMessage = errorMessage
+      .replace(/^JSON\.parse:\s*/i, '')
+      .replace(/\s+at position \d+/i, '')
+      .replace(/\s+at line \d+ column \d+/i, '');
+
+    return { message: cleanMessage, line, column };
+  }
+}
+
+function isValidJson(value: string): boolean {
+  return validateJson(value) === null;
+}
+
+function formatJson(value: string): string {
+  try {
+    const parsed = JSON.parse(value);
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    return value;
+  }
+}
+
+function FormatIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
+    </svg>
+  );
 }
 
 type TokenType = 'key' | 'string' | 'number' | 'boolean' | 'null' | 'punctuation';
@@ -148,48 +219,90 @@ export function JsonEditor({
   // Calculate min-height based on rows (approximate line height of 1.5rem)
   const minHeight = `${rows * 1.5}rem`;
 
-  return (
-    <div className="relative font-mono text-sm bg-base-100 rounded-lg">
-      {/* Syntax highlighted background layer */}
-      <pre
-        ref={highlightRef}
-        className="absolute inset-0 p-3 m-0 overflow-hidden pointer-events-none whitespace-pre-wrap break-words"
-        style={{ minHeight }}
-        aria-hidden="true"
-      >
-        {tokens.length > 0 ? (
-          tokens.map((token, index) => {
-            const className = tokenColors[token.type];
-            return className ? (
-              <span key={index} className={className}>{token.value}</span>
-            ) : (
-              <span key={index}>{token.value}</span>
-            );
-          })
-        ) : (
-          <span className="text-base-content/30">{placeholder}</span>
-        )}
-        {/* Extra space to ensure pre matches textarea height */}
-        {'\n'}
-      </pre>
+  const jsonError = useMemo(() => validateJson(value), [value]);
 
-      {/* Editable textarea layer (transparent text, visible caret) */}
-      <textarea
-        ref={textareaRef}
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onScroll={handleScroll}
-        disabled={disabled}
-        placeholder={placeholder}
-        className="relative z-10 w-full p-3 m-0 bg-transparent border border-base-300 rounded-lg resize-y overflow-auto focus:outline-none focus:border-primary"
-        style={{
-          minHeight,
-          color: 'transparent',
-          caretColor: 'oklch(var(--bc))',
-        }}
-        spellCheck={false}
-      />
+  const canFormat = useMemo(() => {
+    if (!value.trim()) return false;
+    return jsonError === null;
+  }, [value, jsonError]);
+
+  const handleFormat = useCallback(() => {
+    if (canFormat) {
+      onChange(formatJson(value));
+    }
+  }, [value, onChange, canFormat]);
+
+  return (
+    <div className="font-mono text-sm">
+      <div className="relative bg-base-100 rounded-lg">
+        {/* Format button */}
+        <button
+          type="button"
+          onClick={handleFormat}
+          disabled={disabled || !canFormat}
+          className="absolute top-1 right-1 z-20 btn btn-xs btn-ghost text-base-content/50 hover:text-base-content disabled:opacity-30"
+          title={canFormat ? 'Format JSON' : 'Invalid JSON'}
+        >
+          <FormatIcon />
+        </button>
+        {/* Syntax highlighted background layer */}
+        <pre
+          ref={highlightRef}
+          className="absolute inset-0 p-3 m-0 overflow-hidden pointer-events-none whitespace-pre-wrap break-words"
+          style={{ minHeight }}
+          aria-hidden="true"
+        >
+          {tokens.length > 0 ? (
+            tokens.map((token, index) => {
+              const className = tokenColors[token.type];
+              return className ? (
+                <span key={index} className={className}>{token.value}</span>
+              ) : (
+                <span key={index}>{token.value}</span>
+              );
+            })
+          ) : (
+            <span className="text-base-content/30">{placeholder}</span>
+          )}
+          {/* Extra space to ensure pre matches textarea height */}
+          {'\n'}
+        </pre>
+
+        {/* Editable textarea layer (transparent text, visible caret) */}
+        <textarea
+          ref={textareaRef}
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onScroll={handleScroll}
+          disabled={disabled}
+          placeholder={placeholder}
+          className={`relative z-10 w-full p-3 m-0 bg-transparent border rounded-lg resize-y overflow-auto focus:outline-none ${
+            jsonError
+              ? 'border-error focus:border-error'
+              : 'border-base-300 focus:border-primary'
+          }`}
+          style={{
+            minHeight,
+            color: 'transparent',
+            caretColor: 'oklch(var(--bc))',
+          }}
+          spellCheck={false}
+        />
+      </div>
+
+      {/* Inline error display */}
+      {jsonError && (
+        <div className="mt-1 text-xs text-error flex items-start gap-1">
+          <svg className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>
+            <span className="font-medium">Line {jsonError.line}, Col {jsonError.column}:</span>{' '}
+            {jsonError.message}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
