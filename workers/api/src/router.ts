@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { generateProjectId } from '@mockd/shared/utils';
+import { generateProjectId, validateEndpointInput } from '@mockd/shared/utils';
 import type { DbProject, Project, CreateProjectRequest, CreateEndpointRequest, UpdateEndpointRequest } from '@mockd/shared/types';
 import { TIER_LIMITS, type Tier } from '@mockd/shared/constants';
 import type { Env } from './index';
@@ -276,6 +276,18 @@ router.post('/projects/:projectId/endpoints', async (c) => {
 
   const body = await c.req.json<CreateEndpointRequest>();
 
+  // Validate input against tier limits
+  const validation = validateEndpointInput(body, userTier, { requirePath: true });
+  if (!validation.valid) {
+    return c.json({
+      error: validation.errors[0].error,
+      code: validation.errors[0].code,
+      field: validation.errors[0].field,
+      ...(validation.errors[0].limit !== undefined && { limit: validation.errors[0].limit }),
+      ...(validation.errors[0].actual !== undefined && { actual: validation.errors[0].actual }),
+    }, 400);
+  }
+
   const response = await stub.fetch(
     new Request('http://internal/__internal/endpoints', {
       method: 'POST',
@@ -296,13 +308,36 @@ router.post('/projects/:projectId/endpoints', async (c) => {
 router.put('/projects/:projectId/endpoints/:id', async (c) => {
   const projectId = c.req.param('projectId');
   const endpointId = c.req.param('id');
-  const subdomain = await getProjectDOName(c.env.DB, projectId);
+  const project = await getProjectById(c.env.DB, projectId);
 
-  if (!subdomain) {
+  if (!project) {
     return c.json({ error: 'Project not found' }, 404);
   }
 
+  const subdomain = project.user_id ? project.subdomain : project.id;
+
+  // Determine user tier for validation
+  let userTier: Tier = 'free';
+  if (project.user_id) {
+    const user = await c.env.DB.prepare('SELECT tier FROM users WHERE id = ?')
+      .bind(project.user_id)
+      .first<{ tier: string }>();
+    userTier = (user?.tier || 'free') as Tier;
+  }
+
   const body = await c.req.json<UpdateEndpointRequest>();
+
+  // Validate input against tier limits
+  const validation = validateEndpointInput(body, userTier);
+  if (!validation.valid) {
+    return c.json({
+      error: validation.errors[0].error,
+      code: validation.errors[0].code,
+      field: validation.errors[0].field,
+      ...(validation.errors[0].limit !== undefined && { limit: validation.errors[0].limit }),
+      ...(validation.errors[0].actual !== undefined && { actual: validation.errors[0].actual }),
+    }, 400);
+  }
 
   const stub = getDOStub(c.env, subdomain);
   const response = await stub.fetch(
