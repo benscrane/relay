@@ -16,6 +16,7 @@ export interface Env {
   API_URL: string;
   COOKIE_DOMAIN?: string;
   CORS_ORIGINS?: string; // Comma-separated list of allowed origins (defaults to APP_URL)
+  INTERNAL_API_SECRET: string; // Shared secret for authenticating internal DO requests
 }
 
 const app = new Hono<{ Bindings: Env }>();

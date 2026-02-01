@@ -12,6 +12,7 @@ enabled = true
 
 [vars]
 ENVIRONMENT = "development"
+INTERNAL_API_SECRET = "dev-internal-secret-change-in-production"
 
 [[d1_databases]]
 binding = "DB"

@@ -12,6 +12,10 @@ import type {
   UpdateMockRuleRequest,
 } from '@mockd/shared/types/mock-rule';
 
+interface DOEnv {
+  INTERNAL_API_SECRET: string;
+}
+
 interface DbEndpoint {
   [key: string]: string | number | null;
   id: string;
@@ -46,9 +50,14 @@ export class EndpointDO implements DurableObject {
   private sessions: Map<WebSocket, { endpointId?: string }> = new Map();
   private rulesCache: Map<string, RulesCache> = new Map();
 
-  constructor(private state: DurableObjectState, private env: unknown) {
+  constructor(private state: DurableObjectState, private env: DOEnv) {
     this.sql = state.storage.sql;
     this.initializeSchema();
+  }
+
+  private validateInternalAuth(request: Request): boolean {
+    const authHeader = request.headers.get('X-Internal-Auth');
+    return authHeader === this.env.INTERNAL_API_SECRET;
   }
 
   private initializeSchema(): void {
@@ -208,6 +217,14 @@ export class EndpointDO implements DurableObject {
   }
 
   private async handleInternalRequest(request: Request): Promise<Response> {
+    // Validate internal authentication
+    if (!this.validateInternalAuth(request)) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const url = new URL(request.url);
     const path = url.pathname;
 

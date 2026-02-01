@@ -35,6 +35,14 @@ function getDOStub(env: Env, doName: string): DurableObjectStub {
   return env.ENDPOINT_DO.get(doId);
 }
 
+// Helper: Create headers with internal auth for DO requests
+function getInternalAuthHeaders(env: Env, additionalHeaders?: Record<string, string>): HeadersInit {
+  return {
+    'X-Internal-Auth': env.INTERNAL_API_SECRET,
+    ...additionalHeaders,
+  };
+}
+
 // Helper: Transform DB row to API response
 function mapDbProjectToProject(dbProject: DbProject): Project {
   return {
@@ -229,7 +237,9 @@ router.get('/projects/:projectId/endpoints', async (c) => {
 
   const stub = getDOStub(c.env, subdomain);
   const response = await stub.fetch(
-    new Request('http://internal/__internal/endpoints')
+    new Request('http://internal/__internal/endpoints', {
+      headers: getInternalAuthHeaders(c.env),
+    })
   );
   const data = await response.json();
 
@@ -259,7 +269,9 @@ router.post('/projects/:projectId/endpoints', async (c) => {
 
   // Check endpoint limit before creating
   const endpointsResponse = await stub.fetch(
-    new Request('http://internal/__internal/endpoints')
+    new Request('http://internal/__internal/endpoints', {
+      headers: getInternalAuthHeaders(c.env),
+    })
   );
   const endpointsData = await endpointsResponse.json() as { data: unknown[] };
   const currentEndpointCount = endpointsData.data?.length ?? 0;
@@ -291,7 +303,7 @@ router.post('/projects/:projectId/endpoints', async (c) => {
   const response = await stub.fetch(
     new Request('http://internal/__internal/endpoints', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getInternalAuthHeaders(c.env, { 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         path: body.path,
         response_body: body.responseBody,
@@ -343,7 +355,7 @@ router.put('/projects/:projectId/endpoints/:id', async (c) => {
   const response = await stub.fetch(
     new Request(`http://internal/__internal/endpoints/${endpointId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getInternalAuthHeaders(c.env, { 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         response_body: body.responseBody,
         status_code: body.statusCode,
@@ -369,6 +381,7 @@ router.delete('/projects/:projectId/endpoints/:id', async (c) => {
   const response = await stub.fetch(
     new Request(`http://internal/__internal/endpoints/${endpointId}`, {
       method: 'DELETE',
+      headers: getInternalAuthHeaders(c.env),
     })
   );
   const data = await response.json();
@@ -389,7 +402,9 @@ router.get('/projects/:projectId/endpoints/:endpointId/rules', async (c) => {
 
   const stub = getDOStub(c.env, subdomain);
   const response = await stub.fetch(
-    new Request(`http://internal/__internal/rules?endpointId=${endpointId}`)
+    new Request(`http://internal/__internal/rules?endpointId=${endpointId}`, {
+      headers: getInternalAuthHeaders(c.env),
+    })
   );
   const data = await response.json();
 
@@ -410,7 +425,7 @@ router.post('/projects/:projectId/endpoints/:endpointId/rules', async (c) => {
   const response = await stub.fetch(
     new Request('http://internal/__internal/rules', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getInternalAuthHeaders(c.env, { 'Content-Type': 'application/json' }),
       body: JSON.stringify({ ...body, endpointId }),
     })
   );
@@ -433,7 +448,7 @@ router.put('/projects/:projectId/endpoints/:endpointId/rules/:ruleId', async (c)
   const response = await stub.fetch(
     new Request(`http://internal/__internal/rules/${ruleId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getInternalAuthHeaders(c.env, { 'Content-Type': 'application/json' }),
       body: JSON.stringify(body),
     })
   );
@@ -455,6 +470,7 @@ router.delete('/projects/:projectId/endpoints/:endpointId/rules/:ruleId', async 
   const response = await stub.fetch(
     new Request(`http://internal/__internal/rules/${ruleId}`, {
       method: 'DELETE',
+      headers: getInternalAuthHeaders(c.env),
     })
   );
   const data = await response.json();
@@ -477,6 +493,7 @@ router.delete('/projects/:projectId/endpoints/:endpointId/logs', async (c) => {
   const response = await stub.fetch(
     new Request(`http://internal/__internal/logs?endpointId=${endpointId}`, {
       method: 'DELETE',
+      headers: getInternalAuthHeaders(c.env),
     })
   );
   const data = await response.json();

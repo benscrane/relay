@@ -376,6 +376,7 @@ export function createMockEnv(store: MockDataStore): Env {
     APP_URL: 'http://localhost:5173',
     API_URL: 'http://localhost:8787',
     COOKIE_DOMAIN: undefined,
+    INTERNAL_API_SECRET: 'test-internal-secret',
   };
 }
 
