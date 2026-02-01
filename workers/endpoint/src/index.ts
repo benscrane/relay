@@ -5,6 +5,7 @@ export { EndpointDO };
 export interface Env {
   ENDPOINT_DO: DurableObjectNamespace;
   ENVIRONMENT: string;
+  INTERNAL_API_SECRET: string; // Shared secret for authenticating internal DO requests
 }
 
 // Reserved subdomains that can't be used for projects
@@ -45,6 +46,17 @@ function extractSubdomain(request: Request, env: Env): { subdomain: string; path
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+
+    // Block external access to internal endpoints
+    // These should only be accessed via the API worker with proper authentication
+    if (url.pathname.startsWith('/__internal/')) {
+      return Response.json(
+        { error: 'Not found' },
+        { status: 404 }
+      );
+    }
+
     const result = extractSubdomain(request, env);
 
     if (!result) {
@@ -68,8 +80,17 @@ export default {
 
     // Strip path prefix for /m/ routes so DO sees clean paths
     if (pathPrefix) {
-      const url = new URL(request.url);
-      url.pathname = url.pathname.slice(pathPrefix.length) || '/';
+      const strippedPath = url.pathname.slice(pathPrefix.length) || '/';
+
+      // Also block internal endpoints via /m/{id}/__internal/ path
+      if (strippedPath.startsWith('/__internal/')) {
+        return Response.json(
+          { error: 'Not found' },
+          { status: 404 }
+        );
+      }
+
+      url.pathname = strippedPath;
       return stub.fetch(new Request(url.toString(), request));
     }
 
