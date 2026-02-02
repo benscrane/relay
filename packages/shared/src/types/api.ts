@@ -11,6 +11,7 @@ export interface Endpoint {
   responseBody: string;
   statusCode: number;
   delay: number;
+  rateLimit: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,12 +30,14 @@ export interface CreateEndpointRequest {
   responseBody: string;
   statusCode?: number;
   delay?: number;
+  rateLimit?: number;
 }
 
 export interface UpdateEndpointRequest {
   responseBody?: string;
   statusCode?: number;
   delay?: number;
+  rateLimit?: number;
 }
 
 export interface CreateProjectRequest {

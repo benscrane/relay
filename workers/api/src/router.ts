@@ -300,6 +300,10 @@ router.post('/projects/:projectId/endpoints', async (c) => {
     }, 400);
   }
 
+  // Use tier default rate limit if not specified
+  const tierLimits = TIER_LIMITS[userTier];
+  const rateLimit = body.rateLimit ?? tierLimits.defaultEndpointRateLimit;
+
   const response = await stub.fetch(
     new Request('http://internal/__internal/endpoints', {
       method: 'POST',
@@ -309,6 +313,7 @@ router.post('/projects/:projectId/endpoints', async (c) => {
         response_body: body.responseBody,
         status_code: body.statusCode ?? 200,
         delay_ms: body.delay ?? 0,
+        rate_limit: rateLimit,
       }),
     })
   );
@@ -360,6 +365,7 @@ router.put('/projects/:projectId/endpoints/:id', async (c) => {
         response_body: body.responseBody,
         status_code: body.statusCode,
         delay_ms: body.delay,
+        rate_limit: body.rateLimit,
       }),
     })
   );

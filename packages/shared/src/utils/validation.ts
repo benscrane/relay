@@ -41,6 +41,7 @@ interface EndpointInput {
   responseBody?: string;
   statusCode?: number;
   delay?: number;
+  rateLimit?: number;
 }
 
 /**
@@ -117,6 +118,25 @@ export function validateEndpointInput(
         field: 'delay',
         limit: limits.maxDelay,
         actual: input.delay,
+      });
+    }
+  }
+
+  // Rate limit validation
+  if (input.rateLimit !== undefined) {
+    if (typeof input.rateLimit !== 'number' || !Number.isInteger(input.rateLimit) || input.rateLimit < 1) {
+      errors.push({
+        error: 'Rate limit must be a positive integer',
+        code: 'RATE_LIMIT_INVALID',
+        field: 'rateLimit',
+      });
+    } else if (input.rateLimit > limits.maxEndpointRateLimit) {
+      errors.push({
+        error: `Rate limit exceeds ${tier} tier maximum of ${limits.maxEndpointRateLimit} requests/minute`,
+        code: 'RATE_LIMIT_EXCEEDS_TIER',
+        field: 'rateLimit',
+        limit: limits.maxEndpointRateLimit,
+        actual: input.rateLimit,
       });
     }
   }

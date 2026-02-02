@@ -6,6 +6,8 @@ export const TIER_LIMITS = {
     logRetentionDays: 1,
     maxResponseSize: 64 * 1024, // 64KB
     maxDelay: 5000, // 5 seconds
+    defaultEndpointRateLimit: 60, // requests per minute
+    maxEndpointRateLimit: 120,
   },
   pro: {
     projects: 25,
@@ -14,6 +16,8 @@ export const TIER_LIMITS = {
     logRetentionDays: 7,
     maxResponseSize: 1024 * 1024, // 1MB
     maxDelay: 30000, // 30 seconds
+    defaultEndpointRateLimit: 120, // requests per minute
+    maxEndpointRateLimit: 600,
   },
   team: {
     projects: 100,
@@ -22,6 +26,8 @@ export const TIER_LIMITS = {
     logRetentionDays: 30,
     maxResponseSize: 5 * 1024 * 1024, // 5MB
     maxDelay: 60000, // 60 seconds
+    defaultEndpointRateLimit: 300, // requests per minute
+    maxEndpointRateLimit: 3000,
   },
 } as const;
 
