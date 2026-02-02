@@ -27,6 +27,7 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
   );
   const [statusCode, setStatusCode] = useState(endpoint?.statusCode?.toString() || '200');
   const [delay, setDelay] = useState(endpoint?.delay?.toString() || '0');
+  const [rateLimit, setRateLimit] = useState(endpoint?.rateLimit?.toString() || '120');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,6 +56,12 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
       return;
     }
 
+    const rateLimitNum = parseInt(rateLimit, 10);
+    if (isNaN(rateLimitNum) || rateLimitNum < 1) {
+      setError('Rate limit must be a positive number');
+      return;
+    }
+
     try {
       // Validate JSON
       JSON.parse(responseBody);
@@ -65,10 +72,10 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
 
     try {
       if (isEdit) {
-        const data: UpdateEndpointRequest = { responseBody, statusCode: statusCodeNum, delay: delayNum };
+        const data: UpdateEndpointRequest = { responseBody, statusCode: statusCodeNum, delay: delayNum, rateLimit: rateLimitNum };
         await (onSubmit as (data: UpdateEndpointRequest) => Promise<void>)(data);
       } else {
-        const data: CreateEndpointRequest = { path: path.trim(), responseBody, statusCode: statusCodeNum, delay: delayNum };
+        const data: CreateEndpointRequest = { path: path.trim(), responseBody, statusCode: statusCodeNum, delay: delayNum, rateLimit: rateLimitNum };
         await (onSubmit as (data: CreateEndpointRequest) => Promise<void>)(data);
       }
     } catch (err) {
@@ -104,7 +111,7 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div className="form-control">
           <label htmlFor="statusCode" className="label">
             <span className="label-text">Status Code</span>
@@ -131,6 +138,21 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
             value={delay}
             onChange={(e) => setDelay(e.target.value)}
             min="0"
+            className="input input-bordered w-full"
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="form-control">
+          <label htmlFor="rateLimit" className="label">
+            <span className="label-text">Rate Limit (req/min)</span>
+          </label>
+          <input
+            type="number"
+            id="rateLimit"
+            value={rateLimit}
+            onChange={(e) => setRateLimit(e.target.value)}
+            min="1"
             className="input input-bordered w-full"
             disabled={isLoading}
           />

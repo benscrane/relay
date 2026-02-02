@@ -1,4 +1,16 @@
-import { matchPath, normalizePath, generateId, generateRuleId, matchRule, interpolateParams, calculatePathSpecificity } from '@mockd/shared/utils';
+import {
+  matchPath,
+  normalizePath,
+  generateId,
+  generateRuleId,
+  matchRule,
+  interpolateParams,
+  calculatePathSpecificity,
+  getWindowKey,
+  calculateRateLimitHeaders,
+  getRateLimitExceededData,
+  RATE_LIMIT_WINDOW_MS,
+} from '@mockd/shared/utils';
 import type { RequestContext } from '@mockd/shared/utils';
 import type {
   ClientMessage,
@@ -23,6 +35,7 @@ interface DbEndpoint {
   response_body: string;
   status_code: number;
   delay_ms: number;
+  rate_limit: number;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +47,7 @@ interface ApiEndpoint {
   responseBody: string;
   statusCode: number;
   delay: number;
+  rateLimit: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,6 +91,7 @@ export class EndpointDO implements DurableObject {
         response_body TEXT NOT NULL DEFAULT '{}',
         status_code INTEGER NOT NULL DEFAULT 200,
         delay_ms INTEGER NOT NULL DEFAULT 0,
+        rate_limit INTEGER NOT NULL DEFAULT 120,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
@@ -132,6 +147,15 @@ export class EndpointDO implements DurableObject {
     if (!requestLogColumns.some(c => c.name === 'response_time_ms')) {
       this.sql.exec(`ALTER TABLE request_logs ADD COLUMN response_time_ms INTEGER`);
     }
+
+    // Migrate: add rate_limit column to endpoints
+    const endpointColumns = this.sql.exec<{ name: string }>(
+      "PRAGMA table_info(endpoints)"
+    ).toArray();
+
+    if (!endpointColumns.some(c => c.name === 'rate_limit')) {
+      this.sql.exec(`ALTER TABLE endpoints ADD COLUMN rate_limit INTEGER NOT NULL DEFAULT 120`);
+    }
   }
 
   private getRulesForEndpoint(endpointId: string): MockRule[] {
@@ -184,6 +208,7 @@ export class EndpointDO implements DurableObject {
       responseBody: dbEndpoint.response_body,
       statusCode: dbEndpoint.status_code,
       delay: dbEndpoint.delay_ms,
+      rateLimit: dbEndpoint.rate_limit ?? 120,
       createdAt: dbEndpoint.created_at,
       updatedAt: dbEndpoint.updated_at,
     };
@@ -244,7 +269,7 @@ export class EndpointDO implements DurableObject {
 
     // POST /__internal/endpoints - Create a new endpoint
     if (path === '/__internal/endpoints' && request.method === 'POST') {
-      const body = await request.json() as { path: string; response_body?: string; status_code?: number; delay_ms?: number };
+      const body = await request.json() as { path: string; response_body?: string; status_code?: number; delay_ms?: number; rate_limit?: number };
 
       if (!body.path) {
         return new Response(JSON.stringify({ error: 'path is required' }), {
@@ -269,13 +294,14 @@ export class EndpointDO implements DurableObject {
       const now = new Date().toISOString();
 
       this.sql.exec(
-        `INSERT INTO endpoints (id, path, response_body, status_code, delay_ms, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO endpoints (id, path, response_body, status_code, delay_ms, rate_limit, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         id,
         body.path,
         body.response_body ?? '{}',
         body.status_code ?? 200,
         body.delay_ms ?? 0,
+        body.rate_limit ?? 120,
         now,
         now
       );
@@ -294,7 +320,7 @@ export class EndpointDO implements DurableObject {
     const endpointUpdateMatch = path.match(/^\/__internal\/endpoints\/([^/]+)$/);
     if (endpointUpdateMatch && request.method === 'PUT') {
       const endpointId = endpointUpdateMatch[1];
-      const body = await request.json() as { response_body?: string; status_code?: number; delay_ms?: number };
+      const body = await request.json() as { response_body?: string; status_code?: number; delay_ms?: number; rate_limit?: number };
 
       // Check if endpoint exists
       const existing = this.sql
@@ -322,6 +348,10 @@ export class EndpointDO implements DurableObject {
       if (body.delay_ms !== undefined) {
         updates.push('delay_ms = ?');
         params.push(body.delay_ms);
+      }
+      if (body.rate_limit !== undefined) {
+        updates.push('rate_limit = ?');
+        params.push(body.rate_limit);
       }
 
       if (updates.length > 0) {
@@ -583,6 +613,31 @@ export class EndpointDO implements DurableObject {
     });
   }
 
+  /**
+   * Check and increment rate limit counter for an endpoint.
+   * Uses Durable Object transactional storage for atomic operations.
+   */
+  private async checkRateLimit(endpointId: string, limit: number): Promise<{
+    allowed: boolean;
+    count: number;
+  }> {
+    const key = getWindowKey(endpointId, RATE_LIMIT_WINDOW_MS);
+    const count = (await this.state.storage.get<number>(key)) ?? 0;
+
+    if (count >= limit) {
+      return { allowed: false, count };
+    }
+
+    // Increment counter with TTL (auto-expires after 2 windows)
+    // Using type assertion because CF types may not include expirationTtl yet
+    const ttlSeconds = Math.ceil((RATE_LIMIT_WINDOW_MS * 2) / 1000);
+    await this.state.storage.put(key, count + 1, {
+      expirationTtl: ttlSeconds,
+    } as DurableObjectPutOptions);
+
+    return { allowed: true, count: count + 1 };
+  }
+
   private async handleMockRequest(request: Request): Promise<Response> {
     const startTime = Date.now();
     const url = new URL(request.url);
@@ -626,6 +681,18 @@ export class EndpointDO implements DurableObject {
       });
     }
 
+    // Check rate limit
+    const rateLimit = matchedEndpoint.rate_limit ?? 120;
+    const { allowed, count } = await this.checkRateLimit(matchedEndpoint.id, rateLimit);
+
+    if (!allowed) {
+      const rateLimitData = getRateLimitExceededData(rateLimit, RATE_LIMIT_WINDOW_MS);
+      return new Response(rateLimitData.body, {
+        status: rateLimitData.status,
+        headers: rateLimitData.headers,
+      });
+    }
+
     // Get rules for this endpoint and try to match
     const rules = this.getRulesForEndpoint(matchedEndpoint.id);
     const requestContext: RequestContext = { method, path, headers: headersObj };
@@ -657,6 +724,10 @@ export class EndpointDO implements DurableObject {
       responseBody = interpolateParams(matchedEndpoint.response_body, endpointPathParams);
       responseDelayMs = matchedEndpoint.delay_ms;
     }
+
+    // Add rate limit headers to response
+    const rateLimitHeaders = calculateRateLimitHeaders(rateLimit, count, RATE_LIMIT_WINDOW_MS);
+    responseHeaders = { ...responseHeaders, ...rateLimitHeaders };
 
     // Calculate response time (processing time before any artificial delay)
     const responseTimeMs = Date.now() - startTime;
