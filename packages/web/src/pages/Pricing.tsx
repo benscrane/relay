@@ -133,7 +133,7 @@ function PricingCard({ tier }: { tier: PricingTier }) {
 
 export function Pricing() {
     return (
-        <div className="min-h-screen bg-base-100">
+        <div className="min-h-screen bg-base-200">
             <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="text-center mb-12">
