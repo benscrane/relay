@@ -29,6 +29,24 @@ interface DOEnv {
   INTERNAL_API_SECRET: string;
 }
 
+// Headers added by Cloudflare that should be filtered from request logs
+// These are infrastructure headers, not headers sent by the actual client
+const CLOUDFLARE_HEADERS = new Set([
+  'cf-connecting-ip',
+  'cf-ipcountry',
+  'cf-ray',
+  'cf-visitor',
+  'cf-request-id',
+  'cf-warp-tag-id',
+  'cf-ew-via',
+  'cf-pseudo-ipv4',
+  'cf-connecting-ipv6',
+  'x-forwarded-proto',
+  'x-forwarded-for',
+  'x-real-ip',
+  'cdn-loop',
+]);
+
 interface DbEndpoint {
   [key: string]: string | number | null;
   id: string;
@@ -815,10 +833,12 @@ export class EndpointDO implements DurableObject {
     const id = `req_${generateId()}`;
     const timestamp = new Date().toISOString();
 
-    // Convert headers to JSON
+    // Convert headers to JSON, filtering out Cloudflare infrastructure headers
     const headersObj: Record<string, string> = {};
     headers.forEach((value, key) => {
-      headersObj[key] = value;
+      if (!CLOUDFLARE_HEADERS.has(key.toLowerCase())) {
+        headersObj[key] = value;
+      }
     });
     const headersJson = JSON.stringify(headersObj);
     const pathParamsJson = pathParams && Object.keys(pathParams).length > 0
