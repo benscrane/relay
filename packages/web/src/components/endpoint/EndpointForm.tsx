@@ -112,7 +112,7 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="form-control">
           <label htmlFor="statusCode" className="label">
             <span className="label-text">Status Code</span>
