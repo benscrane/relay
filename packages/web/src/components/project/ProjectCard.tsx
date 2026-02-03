@@ -10,7 +10,7 @@ export function ProjectCard({ project, endpointCount = 0 }: ProjectCardProps) {
   const isAnonymous = !project.userId;
 
   return (
-    <div className="bg-base-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-base-100 rounded-lg shadow-sm hover:shadow-md transition-shadow">
       <Link to={`/projects/${project.id}`} className="block p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
