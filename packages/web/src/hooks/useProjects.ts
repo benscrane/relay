@@ -20,6 +20,7 @@ interface UseProjectsReturn {
   createAnonymousProject: () => Promise<Project>;
   updateProject: (projectId: string, data: { name?: string }) => Promise<Project>;
   deleteProject: (projectId: string) => Promise<void>;
+  claimProject: (projectId: string, data?: { name?: string; subdomain?: string }) => Promise<Project>;
   clearProjects: () => void;
 }
 
@@ -224,6 +225,34 @@ export function useProjects(): UseProjectsReturn {
     toast.success('Project deleted');
   }, [projects]);
 
+  const claimProject = useCallback(async (projectId: string, data?: { name?: string; subdomain?: string }): Promise<Project> => {
+    const response = await fetch(`${getApiBaseUrl()}/api/projects/${projectId}/claim`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data || {}),
+    });
+
+    if (!response.ok) {
+      const json = await response.json().catch(() => ({}));
+      const errorMsg = json.error || 'Failed to claim project';
+      toast.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    const json = await response.json();
+    const claimedProject = json.data as Project;
+
+    // Remove from anonymous localStorage since it's now owned
+    removeAnonymousProjectId(projectId);
+
+    // Update local state
+    setProjects(prev => prev.map(p => p.id === projectId ? claimedProject : p));
+    toast.success('Project claimed to your account');
+
+    return claimedProject;
+  }, []);
+
   const clearProjects = useCallback(() => {
     setProjects([]);
   }, []);
@@ -239,6 +268,7 @@ export function useProjects(): UseProjectsReturn {
     createAnonymousProject,
     updateProject,
     deleteProject,
+    claimProject,
     clearProjects,
   };
 }
