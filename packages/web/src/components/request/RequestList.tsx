@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import type { RequestLog } from '@mockd/shared';
 import { RequestItem } from './RequestItem';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { CopyButton } from '../common/CopyButton';
 import type { ConnectionStatus } from '../../hooks/useWebSocket';
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const;
@@ -83,9 +84,10 @@ interface RequestListProps {
   requests: RequestLog[];
   status: ConnectionStatus;
   onClear: () => void;
+  endpointUrl?: string;
 }
 
-export function RequestList({ requests, status, onClear }: RequestListProps) {
+export function RequestList({ requests, status, onClear, endpointUrl }: RequestListProps) {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [methodFilter, setMethodFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -364,9 +366,23 @@ export function RequestList({ requests, status, onClear }: RequestListProps) {
             {requests.length === 0 ? (
               <>
                 <p className="mb-2">No requests yet</p>
-                <p className="text-sm">
-                  Send a request to your endpoint to see it appear here
-                </p>
+                {endpointUrl ? (
+                  <div className="max-w-md mx-auto">
+                    <p className="text-sm mb-3">Try sending your first request:</p>
+                    <div className="bg-base-200 rounded-lg p-3 text-left">
+                      <code className="text-xs font-mono text-base-content block whitespace-pre-wrap break-all">
+                        {`curl ${endpointUrl}`}
+                      </code>
+                    </div>
+                    <div className="mt-2">
+                      <CopyButton text={`curl ${endpointUrl}`} label="Copy command" />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm">
+                    Send a request to your endpoint to see it appear here
+                  </p>
+                )}
               </>
             ) : (
               <>

@@ -225,6 +225,68 @@ router.delete('/projects/:id', async (c) => {
   return c.json({ success: true });
 });
 
+// Claim anonymous project (assign to authenticated user)
+router.post('/projects/:id/claim', requireAuth, async (c) => {
+  const projectId = c.req.param('id');
+  const userId = c.get('userId')!;
+  const user = c.get('user')!;
+  const project = await getProjectById(c.env.DB, projectId);
+
+  if (!project) {
+    return c.json({ error: 'Project not found' }, 404);
+  }
+
+  if (project.user_id) {
+    return c.json({ error: 'Project is already owned' }, 400);
+  }
+
+  // Check project limit
+  const userTier = (user.tier || 'free') as Tier;
+  const tierLimit = TIER_LIMITS[userTier].projects;
+  const projectCount = await c.env.DB.prepare(
+    'SELECT COUNT(*) as count FROM projects WHERE user_id = ?'
+  ).bind(userId).first<{ count: number }>();
+
+  if ((projectCount?.count ?? 0) >= tierLimit) {
+    return c.json({
+      error: `Project limit reached. You cannot claim this project.`,
+      code: 'PROJECT_LIMIT_REACHED',
+      limit: tierLimit,
+      currentCount: projectCount?.count ?? 0,
+    }, 403);
+  }
+
+  const body = await c.req.json<{ name?: string; subdomain?: string }>().catch(() => ({} as { name?: string; subdomain?: string }));
+  const newName = body.name || project.name;
+  const newSubdomain = (body.subdomain || '').toLowerCase();
+
+  // Validate subdomain if provided
+  if (newSubdomain && !SUBDOMAIN_REGEX.test(newSubdomain)) {
+    return c.json({ error: 'Invalid subdomain format.' }, 400);
+  }
+
+  const subdomain = newSubdomain || project.subdomain;
+  const now = new Date().toISOString();
+
+  try {
+    await c.env.DB.prepare(
+      'UPDATE projects SET user_id = ?, name = ?, subdomain = ?, updated_at = ? WHERE id = ?'
+    ).bind(userId, newName, subdomain, now, projectId).run();
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+      return c.json({ error: 'Subdomain already exists' }, 409);
+    }
+    throw error;
+  }
+
+  const updatedProject = await getProjectById(c.env.DB, projectId);
+  if (!updatedProject) {
+    return c.json({ error: 'Failed to claim project' }, 500);
+  }
+
+  return c.json({ data: mapDbProjectToProject(updatedProject) });
+});
+
 // Endpoints CRUD
 
 router.get('/projects/:projectId/endpoints', async (c) => {

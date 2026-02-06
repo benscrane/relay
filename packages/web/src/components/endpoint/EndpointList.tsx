@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Endpoint } from '@mockd/shared';
 import { EmptyState } from '../common/EmptyState';
+import { StatusBadge } from '../common/StatusBadge';
 
 interface EndpointListProps {
   projectId: string;
@@ -31,9 +32,16 @@ export function EndpointList({ projectId, endpoints, emptyAction }: EndpointList
           <Link
             key={endpoint.id}
             to={`/projects/${projectId}/endpoints/${endpoint.id}`}
-            className="block px-4 py-3 hover:bg-base-200 transition-colors"
+            className="flex items-center gap-3 px-4 py-3 hover:bg-base-200 transition-colors"
           >
-            <span className="text-sm font-mono text-primary">{endpoint.path}</span>
+            <StatusBadge status={endpoint.statusCode} />
+            <span className="text-sm font-mono text-primary flex-1 truncate">{endpoint.path}</span>
+            <div className="flex items-center gap-3 text-xs text-base-content/50 shrink-0">
+              {endpoint.delay > 0 && (
+                <span title="Response delay">{endpoint.delay}ms</span>
+              )}
+              <span title="Rate limit">{endpoint.rateLimit} req/min</span>
+            </div>
           </Link>
         ))}
       </div>

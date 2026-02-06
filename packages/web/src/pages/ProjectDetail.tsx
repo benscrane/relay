@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { Project, CreateEndpointRequest } from '@mockd/shared';
-import { useProjects, useEndpoints } from '../hooks';
+import { useProjects, useEndpoints, useAuth } from '../hooks';
 import { EndpointList, EndpointForm } from '../components/endpoint';
 import { Breadcrumbs, CopyButton, ConfirmDialog } from '../components/common';
 import { getMockApiSubdomainUrl } from '../config';
@@ -9,7 +9,8 @@ import { getMockApiSubdomainUrl } from '../config';
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const { getProject, updateProject, deleteProject } = useProjects();
+  const { user } = useAuth();
+  const { getProject, updateProject, deleteProject, claimProject } = useProjects();
   const { endpoints, loading: endpointsLoading, fetchEndpoints, createEndpoint } = useEndpoints();
 
   const [project, setProject] = useState<Project | null>(null);
@@ -20,6 +21,23 @@ export function ProjectDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [showDeleteProject, setShowDeleteProject] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
+
+  const isAnonymous = project !== null && !project.userId;
+  const canClaim = isAnonymous && !!user;
+
+  const handleClaimProject = async () => {
+    if (!projectId) return;
+    setIsClaiming(true);
+    try {
+      const claimed = await claimProject(projectId);
+      setProject(claimed);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to claim project');
+    } finally {
+      setIsClaiming(false);
+    }
+  };
 
   useEffect(() => {
     if (!projectId) return;
@@ -180,6 +198,25 @@ export function ProjectDetail() {
             <CopyButton text={endpointBaseUrl} label="Copy URL" iconOnly className="shrink-0" />
           </div>
         </div>
+
+        {canClaim && (
+          <div className="alert mb-6">
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium">This is a temporary project</p>
+              <p className="text-xs text-base-content/70">Claim it to save it to your account permanently.</p>
+            </div>
+            <button
+              onClick={handleClaimProject}
+              disabled={isClaiming}
+              className="btn btn-primary btn-sm"
+            >
+              {isClaiming ? 'Claiming...' : 'Claim Project'}
+            </button>
+          </div>
+        )}
 
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-medium text-base-content">Endpoints</h2>

@@ -167,6 +167,7 @@ export function EndpointDetail() {
                 <code className="text-sm font-mono text-base-content block truncate">{endpointUrl}</code>
               </div>
               <CopyButton text={endpointUrl} label="Copy URL" iconOnly className="shrink-0" />
+              <CopyButton text={`curl -X GET ${endpointUrl}`} label="Copy cURL" className="shrink-0" />
             </div>
             <div className="mt-4 grid grid-cols-2 gap-4 pt-4 border-t border-base-200">
               <div>
@@ -214,6 +215,7 @@ export function EndpointDetail() {
               requests={requests}
               status={status}
               onClear={clearRequests}
+              endpointUrl={endpointUrl}
             />
           </div>
 
