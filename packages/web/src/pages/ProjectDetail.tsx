@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Project, CreateEndpointRequest } from '@mockd/shared';
 import { useProjects, useEndpoints, useAuth } from '../hooks';
 import { EndpointList, EndpointForm } from '../components/endpoint';
@@ -9,6 +9,7 @@ import { getMockApiSubdomainUrl } from '../config';
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { getProject, updateProject, deleteProject, claimProject } = useProjects();
   const { endpoints, loading: endpointsLoading, fetchEndpoints, createEndpoint } = useEndpoints();
@@ -22,6 +23,7 @@ export function ProjectDetail() {
   const [editName, setEditName] = useState('');
   const [showDeleteProject, setShowDeleteProject] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [showGettingStarted, setShowGettingStarted] = useState(searchParams.get('from') === 'template');
 
   const isAnonymous = project !== null && !project.userId;
   const canClaim = isAnonymous && !!user;
@@ -198,6 +200,38 @@ export function ProjectDetail() {
             <CopyButton text={endpointBaseUrl} label="Copy URL" iconOnly className="shrink-0" />
           </div>
         </div>
+
+        {showGettingStarted && endpoints.length > 0 && (
+          <div className="alert alert-success mb-6">
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Your mock API is ready! Try it out:</p>
+              <code className="text-xs font-mono block mt-1 truncate">
+                curl {endpointBaseUrl}{endpoints[0].path}
+              </code>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <CopyButton
+                text={`curl ${endpointBaseUrl}${endpoints[0].path}`}
+                label="Copy"
+                className="btn-sm"
+              />
+              <button
+                onClick={() => {
+                  setShowGettingStarted(false);
+                  setSearchParams({});
+                }}
+                className="btn btn-ghost btn-sm btn-square"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
 
         {canClaim && (
           <div className="alert mb-6">
