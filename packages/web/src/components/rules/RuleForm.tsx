@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { MockRule, CreateMockRuleRequest, UpdateMockRuleRequest } from '@mockd/shared';
+import { stripTemplatesForValidation } from '@mockd/shared/utils';
 import { JsonEditor } from '../common/JsonEditor';
+import { TemplateVariableRef } from '../common/TemplateVariableRef';
 
 interface RuleFormProps {
   rule?: MockRule;
@@ -20,10 +22,10 @@ function isValidJson(str: string): boolean {
   }
 }
 
-function isValidJsonRequired(str: string): boolean {
+function isValidJsonRequiredTemplateAware(str: string): boolean {
   if (!str.trim()) return false;
   try {
-    JSON.parse(str);
+    JSON.parse(stripTemplatesForValidation(str));
     return true;
   } catch {
     return false;
@@ -52,8 +54,8 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // JSON validation - errors shown inline by JsonEditor
-    if (!isValidJsonRequired(responseBody)) {
+    // JSON validation - errors shown inline by JsonEditor (template-aware for response body)
+    if (!isValidJsonRequiredTemplateAware(responseBody)) {
       newErrors.responseBody = 'invalid';
     }
     if (matchHeaders && !isValidJson(matchHeaders)) {
@@ -255,12 +257,9 @@ export function RuleForm({ rule, onSubmit, onCancel }: RuleFormProps) {
             value={responseBody}
             onChange={setResponseBody}
             rows={4}
+            templateAware
           />
-          <label className="label">
-            <span className="label-text-alt text-base-content/70">
-              Use {"{{paramName}}"} to interpolate path parameters
-            </span>
-          </label>
+          <TemplateVariableRef />
         </div>
 
         <div className="form-control mt-3">

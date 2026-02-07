@@ -1,4 +1,5 @@
 import { useRef, useCallback, useMemo } from 'react';
+import { stripTemplatesForValidation } from '@mockd/shared/utils';
 
 interface JsonEditorProps {
   value: string;
@@ -7,6 +8,8 @@ interface JsonEditorProps {
   rows?: number;
   disabled?: boolean;
   id?: string;
+  /** When true, {{template}} variables are stripped before JSON validation */
+  templateAware?: boolean;
 }
 
 interface JsonError {
@@ -208,6 +211,7 @@ export function JsonEditor({
   rows = 8,
   disabled = false,
   id,
+  templateAware = false,
 }: JsonEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLPreElement>(null);
@@ -219,7 +223,12 @@ export function JsonEditor({
   // Calculate min-height based on rows (approximate line height of 1.5rem)
   const minHeight = `${rows * 1.5}rem`;
 
-  const jsonError = useMemo(() => validateJson(value), [value]);
+  const jsonError = useMemo(() => {
+    if (templateAware) {
+      return validateJson(stripTemplatesForValidation(value));
+    }
+    return validateJson(value);
+  }, [value, templateAware]);
 
   const canFormat = useMemo(() => {
     if (!value.trim()) return false;

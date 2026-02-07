@@ -6,3 +6,4 @@ export { MethodBadge } from './MethodBadge';
 export { StatusBadge } from './StatusBadge';
 export { EmptyState } from './EmptyState';
 export { MockdLogo, MockdLogoBadge } from './MockdLogo';
+export { TemplateVariableRef } from './TemplateVariableRef';

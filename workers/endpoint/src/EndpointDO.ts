@@ -4,7 +4,7 @@ import {
   generateId,
   generateRuleId,
   matchRule,
-  interpolateParams,
+  processTemplate,
   calculatePathSpecificity,
   getWindowKey,
   calculateRateLimitHeaders,
@@ -12,7 +12,7 @@ import {
   RATE_LIMIT_WINDOW_MS,
 } from '@mockd/shared/utils';
 import { TIER_LIMITS } from '@mockd/shared/constants';
-import type { RequestContext } from '@mockd/shared/utils';
+import type { RequestContext, TemplateContext } from '@mockd/shared/utils';
 import type {
   ClientMessage,
   ServerMessage,
@@ -868,6 +868,12 @@ export class EndpointDO implements DurableObject {
       });
     }
 
+    // Build query params from URL
+    const queryParams: Record<string, string> = {};
+    url.searchParams.forEach((value, key) => {
+      queryParams[key] = value;
+    });
+
     // Get rules for this endpoint and try to match
     const rules = this.getRulesForEndpoint(matchedEndpoint.id);
     const requestContext: RequestContext = { method, path, headers: headersObj };
@@ -882,12 +888,24 @@ export class EndpointDO implements DurableObject {
     let matchedRuleName: string | null = null;
     let pathParams: Record<string, string> = endpointPathParams;
 
+    // Build template context for dynamic response templating
+    const buildTemplateContext = (params: Record<string, string>): TemplateContext => ({
+      pathParams: params,
+      request: {
+        method,
+        path,
+        headers: headersObj,
+        query: queryParams,
+        body: body || null,
+      },
+    });
+
     if (ruleMatch) {
       const { rule, pathParams: rulePathParams } = ruleMatch;
       matchedRuleId = rule.id;
       matchedRuleName = rule.name;
       responseStatus = rule.responseStatus;
-      responseBody = interpolateParams(rule.responseBody, rulePathParams);
+      responseBody = processTemplate(rule.responseBody, buildTemplateContext(rulePathParams));
       responseDelayMs = rule.responseDelayMs;
       pathParams = rulePathParams;
 
@@ -896,7 +914,7 @@ export class EndpointDO implements DurableObject {
       }
     } else {
       responseStatus = matchedEndpoint.status_code;
-      responseBody = interpolateParams(matchedEndpoint.response_body, endpointPathParams);
+      responseBody = processTemplate(matchedEndpoint.response_body, buildTemplateContext(endpointPathParams));
       responseDelayMs = matchedEndpoint.delay_ms;
     }
 

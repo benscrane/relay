@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { CreateEndpointRequest, UpdateEndpointRequest, Endpoint } from '@mockd/shared';
 import { TIER_LIMITS } from '@mockd/shared';
-import { JsonEditor } from '../common';
+import { stripTemplatesForValidation } from '@mockd/shared/utils';
+import { JsonEditor, TemplateVariableRef } from '../common';
 
 interface EndpointFormCreateProps {
   endpoint?: undefined;
@@ -64,10 +65,10 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
     }
 
     try {
-      // Validate JSON
-      JSON.parse(responseBody);
+      // Validate JSON (strip template variables first so {{...}} tokens don't break parsing)
+      JSON.parse(stripTemplatesForValidation(responseBody));
     } catch {
-      setError('Response body must be valid JSON');
+      setError('Response body must be valid JSON (template variables like {{$uuid}} are allowed inside values)');
       return;
     }
 
@@ -170,7 +171,9 @@ export function EndpointForm({ endpoint, onSubmit, onCancel, isLoading }: Endpoi
           onChange={setResponseBody}
           rows={8}
           disabled={isLoading}
+          templateAware
         />
+        <TemplateVariableRef />
       </div>
 
       <div className="flex justify-end gap-3 pt-2">
