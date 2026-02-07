@@ -797,7 +797,7 @@ export class EndpointDO implements DurableObject {
   }
 
   private async handleMockRequest(request: Request): Promise<Response> {
-    const startTime = Date.now();
+    const startTime = performance.now();
     const url = new URL(request.url);
     const method = request.method;
     const path = normalizePath(url.pathname);
@@ -905,7 +905,7 @@ export class EndpointDO implements DurableObject {
     responseHeaders = { ...responseHeaders, ...rateLimitHeaders };
 
     // Calculate response time (processing time before any artificial delay)
-    const responseTimeMs = Date.now() - startTime;
+    const responseTimeMs = Math.round(performance.now() - startTime);
 
     // Log the request with rule info and response data
     const requestLog = await this.logRequest(
