@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Project, CreateEndpointRequest } from '@mockd/shared';
 import { useProjects, useEndpoints, useAuth } from '../hooks';
-import { EndpointList, EndpointForm } from '../components/endpoint';
+import { EndpointList, EndpointForm, ImportEndpointModal, ExportEndpointModal } from '../components/endpoint';
 import { Breadcrumbs, CopyButton, ConfirmDialog } from '../components/common';
 import { getMockApiSubdomainUrl } from '../config';
 
@@ -24,6 +24,9 @@ export function ProjectDetail() {
   const [showDeleteProject, setShowDeleteProject] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(searchParams.get('from') === 'template');
+  const [showImport, setShowImport] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const isAnonymous = project !== null && !project.userId;
   const canClaim = isAnonymous && !!user;
@@ -73,6 +76,18 @@ export function ProjectDetail() {
       setShowForm(false);
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleImportEndpoints = async (newEndpoints: CreateEndpointRequest[]) => {
+    if (!projectId) return;
+    setIsImporting(true);
+    try {
+      for (const ep of newEndpoints) {
+        await createEndpoint(projectId, ep);
+      }
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -255,12 +270,36 @@ export function ProjectDetail() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-medium text-base-content">Endpoints</h2>
           {!showForm && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="btn btn-primary"
-            >
-              Add Endpoint
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowImport(true)}
+                className="btn btn-ghost btn-sm"
+                title="Import endpoints from cURL or JSON"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Import
+              </button>
+              {endpoints.length > 0 && (
+                <button
+                  onClick={() => setShowExport(true)}
+                  className="btn btn-ghost btn-sm"
+                  title="Export endpoints as cURL, JSON, or OpenAPI"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export
+                </button>
+              )}
+              <button
+                onClick={() => setShowForm(true)}
+                className="btn btn-primary"
+              >
+                Add Endpoint
+              </button>
+            </div>
           )}
         </div>
 
@@ -293,6 +332,21 @@ export function ProjectDetail() {
         variant="danger"
         onConfirm={confirmDeleteProject}
         onCancel={() => setShowDeleteProject(false)}
+      />
+
+      <ImportEndpointModal
+        isOpen={showImport}
+        onClose={() => setShowImport(false)}
+        onImport={handleImportEndpoints}
+        isLoading={isImporting}
+      />
+
+      <ExportEndpointModal
+        isOpen={showExport}
+        onClose={() => setShowExport(false)}
+        projectName={project.name}
+        baseUrl={endpointBaseUrl}
+        endpoints={endpoints}
       />
     </div>
   );
