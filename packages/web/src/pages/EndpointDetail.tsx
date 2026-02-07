@@ -4,7 +4,7 @@ import type { Project, Endpoint, UpdateEndpointRequest } from '@mockd/shared';
 import { useProjects, useEndpoints, useWebSocket, useAnalytics } from '../hooks';
 import { RequestList } from '../components/request';
 import { RulesPanel } from '../components/rules';
-import { EndpointForm, QuickTestPanel } from '../components/endpoint';
+import { EndpointForm, QuickTestPanel, ExportEndpointModal } from '../components/endpoint';
 import { AnalyticsDashboard } from '../components/analytics';
 import { Breadcrumbs, CopyButton, ConfirmDialog } from '../components/common';
 import { getMockApiSubdomainUrl, getProjectDoName } from '../config';
@@ -22,6 +22,7 @@ export function EndpointDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [isBodyExpanded, setIsBodyExpanded] = useState(false);
 
   // Get the DO name for WebSocket connection (subdomain for user-owned, id for anonymous)
@@ -141,6 +142,11 @@ export function EndpointDetail() {
                     </li>
                   )}
                   <li>
+                    <button onClick={() => { (document.activeElement as HTMLElement)?.blur(); setShowExport(true); }}>
+                      Export
+                    </button>
+                  </li>
+                  <li>
                     <button onClick={() => { (document.activeElement as HTMLElement)?.blur(); setShowDeleteConfirm(true); }} className="text-error">
                       Delete
                     </button>
@@ -253,6 +259,15 @@ export function EndpointDetail() {
         variant="danger"
         onConfirm={handleDeleteEndpoint}
         onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      <ExportEndpointModal
+        isOpen={showExport}
+        onClose={() => setShowExport(false)}
+        projectName={project.name}
+        baseUrl={getMockApiSubdomainUrl(project.subdomain)}
+        endpoints={endpoints}
+        singleEndpointId={endpointId}
       />
     </div>
   );
