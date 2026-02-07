@@ -5,3 +5,5 @@ export { useWebSocket } from './useWebSocket';
 export type { ConnectionStatus, UseWebSocketReturn, UseWebSocketOptions } from './useWebSocket';
 export { useAuth, AuthProvider } from './useAuth';
 export { useTemplateCreation } from './useTemplateCreation';
+export { useAnalytics } from './useAnalytics';
+export type { EndpointAnalytics } from './useAnalytics';

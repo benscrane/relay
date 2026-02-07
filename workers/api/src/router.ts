@@ -546,6 +546,28 @@ router.delete('/projects/:projectId/endpoints/:endpointId/rules/:ruleId', async 
   return c.json(data, response.status as 200);
 });
 
+// Analytics
+
+router.get('/projects/:projectId/endpoints/:endpointId/analytics', async (c) => {
+  const projectId = c.req.param('projectId');
+  const endpointId = c.req.param('endpointId');
+  const subdomain = await getProjectDOName(c.env.DB, projectId);
+
+  if (!subdomain) {
+    return c.json({ error: 'Project not found' }, 404);
+  }
+
+  const stub = getDOStub(c.env, subdomain);
+  const response = await stub.fetch(
+    new Request(`http://internal/__internal/analytics?endpointId=${endpointId}`, {
+      headers: getInternalAuthHeaders(c.env),
+    })
+  );
+  const data = await response.json();
+
+  return c.json(data, response.status as 200);
+});
+
 // Request Logs
 
 router.delete('/projects/:projectId/endpoints/:endpointId/logs', async (c) => {

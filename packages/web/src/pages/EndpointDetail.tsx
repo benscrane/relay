@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { Project, Endpoint, UpdateEndpointRequest } from '@mockd/shared';
-import { useProjects, useEndpoints, useWebSocket } from '../hooks';
+import { useProjects, useEndpoints, useWebSocket, useAnalytics } from '../hooks';
 import { RequestList } from '../components/request';
 import { RulesPanel } from '../components/rules';
 import { EndpointForm, QuickTestPanel } from '../components/endpoint';
+import { AnalyticsDashboard } from '../components/analytics';
 import { Breadcrumbs, CopyButton, ConfirmDialog } from '../components/common';
 import { getMockApiSubdomainUrl, getProjectDoName } from '../config';
 
@@ -32,6 +33,9 @@ export function EndpointDetail() {
     endpointId: endpointId,
     projectId: projectId,
   });
+
+  // Fetch endpoint analytics
+  const { analytics, loading: analyticsLoading, refetch: refetchAnalytics } = useAnalytics(projectId, endpointId);
 
   useEffect(() => {
     if (!projectId || !endpointId) return;
@@ -208,6 +212,13 @@ export function EndpointDetail() {
             </div>
           </div>
         )}
+
+        <AnalyticsDashboard
+          analytics={analytics}
+          loading={analyticsLoading}
+          liveRequests={requests}
+          onRefresh={refetchAnalytics}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
