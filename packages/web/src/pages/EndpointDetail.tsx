@@ -213,14 +213,11 @@ export function EndpointDetail() {
           </div>
         )}
 
-        <AnalyticsDashboard
-          analytics={analytics}
-          loading={analyticsLoading}
-          liveRequests={requests}
-          onRefresh={refetchAnalytics}
-        />
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <QuickTestPanel endpointUrl={endpointUrl} />
+          </div>
+
           <div>
             <RequestList
               requests={requests}
@@ -229,15 +226,22 @@ export function EndpointDetail() {
               endpointUrl={endpointUrl}
             />
           </div>
+        </div>
 
-          <div className="space-y-6">
-            <QuickTestPanel endpointUrl={endpointUrl} />
+        <div className="mt-6">
+          <RulesPanel
+            projectId={projectId!}
+            endpointId={endpointId!}
+          />
+        </div>
 
-            <RulesPanel
-              projectId={projectId!}
-              endpointId={endpointId!}
-            />
-          </div>
+        <div className="mt-6">
+          <AnalyticsDashboard
+            analytics={analytics}
+            loading={analyticsLoading}
+            liveRequests={requests}
+            onRefresh={refetchAnalytics}
+          />
         </div>
       </main>
 
