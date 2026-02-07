@@ -86,7 +86,8 @@ export function useEndpoints(): UseEndpointsReturn {
     );
 
     if (!response.ok) {
-      const errorMsg = 'Failed to update endpoint';
+      const json = await response.json().catch(() => ({}));
+      const errorMsg = json.error || 'Failed to update endpoint';
       toast.error(errorMsg);
       throw new Error(errorMsg);
     }
@@ -113,7 +114,8 @@ export function useEndpoints(): UseEndpointsReturn {
     );
 
     if (!response.ok) {
-      const errorMsg = 'Failed to delete endpoint';
+      const json = await response.json().catch(() => ({}));
+      const errorMsg = json.error || 'Failed to delete endpoint';
       toast.error(errorMsg);
       throw new Error(errorMsg);
     }
