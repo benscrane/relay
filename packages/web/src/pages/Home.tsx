@@ -1,28 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useProjects, useAuth, useTemplateCreation } from '../hooks';
 import { ProjectList, ProjectForm } from '../components/project';
-import { WelcomeModal, hasSeenWelcome, TemplateSelector } from '../components/onboarding';
+import { TemplateSelector } from '../components/onboarding';
+import { Hero, Features, HowItWorks, CallToAction } from '../components/landing';
 import { getApiBaseUrl } from '../config';
 import type { Project, ProjectTemplate } from '@mockd/shared';
 
 export function Home() {
   const navigate = useNavigate();
-  const { user, logout, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { projects, loading, error, fetchProjects, fetchAnonymousProjects, createProject, createAnonymousProject, clearProjects } = useProjects();
   const { createFromTemplate, isCreating: isTemplateCreating, loadingTemplateId } = useTemplateCreation();
   const [showForm, setShowForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [endpointCounts, setEndpointCounts] = useState<Record<string, number>>({});
   const [anonymousProjects, setAnonymousProjects] = useState<Project[]>([]);
-  const [showWelcome, setShowWelcome] = useState(false);
-
-  // Show welcome modal for first-time visitors once loading finishes
-  useEffect(() => {
-    if (!loading && !authLoading && !hasSeenWelcome()) {
-      setShowWelcome(true);
-    }
-  }, [loading, authLoading]);
 
   // Fetch endpoint counts for all projects
   const fetchEndpointCounts = useCallback(async (projectIds: string[]) => {
@@ -78,11 +71,6 @@ export function Home() {
     }
   }, [projects, anonymousProjects, fetchEndpointCounts]);
 
-  const handleLogout = async () => {
-    await logout();
-    fetchProjects(); // Refresh projects after logout
-  };
-
   const handleCreateProject = async (data: { name: string; subdomain: string }) => {
     setIsCreating(true);
     try {
@@ -98,7 +86,6 @@ export function Home() {
     setIsCreating(true);
     try {
       const project = await createAnonymousProject();
-      // Add to anonymous projects list
       setAnonymousProjects(prev => [...prev, project]);
       navigate(`/projects/${project.id}`);
     } catch (err) {
@@ -118,7 +105,41 @@ export function Home() {
   };
 
   const hasProjects = allProjects.length > 0;
+  const stillLoading = loading || authLoading;
 
+  // Show the landing page to visitors who aren't logged in and have no projects
+  const showLanding = !stillLoading && !user && !hasProjects;
+
+  if (showLanding) {
+    return (
+      <div className="bg-base-200">
+        <Hero onQuickStart={handleQuickStart} isLoading={isCreating} />
+
+        {/* Template quick-start strip */}
+        <section className="py-12 bg-base-100 border-t border-base-300">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h3 className="text-center text-lg font-semibold text-base-content mb-2">
+              Or start from a template
+            </h3>
+            <p className="text-center text-sm text-base-content/60 mb-6">
+              Pre-configured projects to get you going in one click.
+            </p>
+            <TemplateSelector
+              onSelect={handleTemplateSelect}
+              isLoading={isTemplateCreating}
+              loadingTemplateId={loadingTemplateId}
+            />
+          </div>
+        </section>
+
+        <HowItWorks />
+        <Features />
+        <CallToAction onQuickStart={handleQuickStart} isLoading={isCreating} />
+      </div>
+    );
+  }
+
+  // Dashboard view for authenticated users or users with existing projects
   return (
     <div className="min-h-screen bg-base-200">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
@@ -148,7 +169,6 @@ export function Home() {
         <dialog id="new_project_modal" className="modal modal-bottom sm:modal-middle">
           <div className="modal-box max-w-4xl">
             <form method="dialog">
-              {/* if there is a button in form, it will close the modal */}
               <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
             </form>
             <h3 className="font-bold text-lg">New Project</h3>
@@ -168,7 +188,7 @@ export function Home() {
           </div>
         )}
 
-        {loading && allProjects.length === 0 ? (
+        {stillLoading && allProjects.length === 0 ? (
           <div className="text-center py-12 text-base-content/70">Loading projects...</div>
         ) : hasProjects ? (
           <ProjectList
@@ -195,17 +215,6 @@ export function Home() {
           </div>
         )}
       </main>
-
-      <WelcomeModal
-        isOpen={showWelcome}
-        onClose={() => setShowWelcome(false)}
-        onGetStarted={() => {
-          setShowWelcome(false);
-          // If user has no projects, the template selector is already visible below.
-          // Scroll to it for emphasis.
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-      />
     </div>
   );
 }
