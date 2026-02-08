@@ -124,6 +124,23 @@ export function parseCurl(curlCommand: string): ParsedCurl {
           method = 'POST';
         }
       }
+    } else if (token === '--data-urlencode') {
+      i++;
+      if (i < tokens.length) {
+        // --data-urlencode encodes the value and appends to body
+        const part = tokens[i];
+        if (body) {
+          body += '&' + encodeURIComponent(part).replace(/%3D/, '=');
+        } else {
+          body = encodeURIComponent(part).replace(/%3D/, '=');
+        }
+        if (!headers['Content-Type']) {
+          headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        }
+        if (method === 'GET') {
+          method = 'POST';
+        }
+      }
     } else if (token === '--json') {
       i++;
       if (i < tokens.length) {

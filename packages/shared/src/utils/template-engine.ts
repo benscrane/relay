@@ -142,9 +142,13 @@ function resolveRequestVariable(
     return context.request.query[queryName] ?? '';
   }
 
-  // request.body.<field.path> (JSON dot notation)
+  // request.body.<field.path> (JSON dot notation or URL-encoded field)
   if (parts.length >= 3 && parts[1] === 'body') {
     const fieldPath = parts.slice(2);
+    const contentType = getContentType(context.request.headers);
+    if (contentType === 'application/x-www-form-urlencoded') {
+      return resolveFormField(context.request.body, fieldPath[0]);
+    }
     return resolveJsonPath(context.request.body, fieldPath);
   }
 
@@ -170,6 +174,59 @@ function resolveJsonPath(
   } catch {
     return '';
   }
+}
+
+// --- Content-type helpers ---
+
+function getContentType(headers: Record<string, string>): string {
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === 'content-type') {
+      // Strip charset and other parameters (e.g., "application/x-www-form-urlencoded; charset=utf-8")
+      return value.split(';')[0].trim().toLowerCase();
+    }
+  }
+  return '';
+}
+
+function resolveFormField(body: string | null, fieldName: string): string {
+  if (!body) return '';
+  try {
+    const params = new URLSearchParams(body);
+    return params.get(fieldName) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Parse a URL-encoded body string into a key-value record.
+ * Exported for use in UI components.
+ */
+export function parseFormBody(body: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  try {
+    const params = new URLSearchParams(body);
+    params.forEach((value, key) => {
+      result[key] = value;
+    });
+  } catch {
+    // not valid form data
+  }
+  return result;
+}
+
+/**
+ * Check if a content-type string indicates URL-encoded form data.
+ */
+export function isFormUrlEncoded(contentType: string): boolean {
+  return contentType.split(';')[0].trim().toLowerCase() === 'application/x-www-form-urlencoded';
+}
+
+/**
+ * Extract the content-type from a headers object (case-insensitive).
+ */
+export function getContentTypeFromHeaders(headers: Record<string, string>): string {
+  return getContentType(headers);
 }
 
 // --- Main template processor ---

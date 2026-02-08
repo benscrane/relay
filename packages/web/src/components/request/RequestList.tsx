@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { RequestLog } from '@mockd/shared';
+import { isFormUrlEncoded, getContentTypeFromHeaders, parseFormBody } from '@mockd/shared/utils';
 import { RequestItem } from './RequestItem';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { CopyButton } from '../common/CopyButton';
@@ -17,20 +18,36 @@ function formatDateForInput(date: Date): string {
   return date.toISOString().slice(0, 16);
 }
 
+function parseBodyForExport(body: string | null, headers: Record<string, string>): unknown {
+  if (!body) return null;
+  const contentType = getContentTypeFromHeaders(headers);
+  if (isFormUrlEncoded(contentType)) {
+    return parseFormBody(body);
+  }
+  try {
+    return JSON.parse(body);
+  } catch {
+    return body;
+  }
+}
+
 function exportToJson(requests: RequestLog[], filename: string): void {
-  const data = requests.map(req => ({
-    id: req.id,
-    method: req.method,
-    path: req.path,
-    headers: JSON.parse(req.headers || '{}'),
-    body: req.body ? JSON.parse(req.body) : null,
-    timestamp: req.timestamp,
-    responseStatus: req.response_status,
-    responseTimeMs: req.response_time_ms,
-    matchedRuleId: req.matched_rule_id,
-    matchedRuleName: req.matched_rule_name,
-    pathParams: req.path_params ? JSON.parse(req.path_params) : null,
-  }));
+  const data = requests.map(req => {
+    const headers = JSON.parse(req.headers || '{}');
+    return {
+      id: req.id,
+      method: req.method,
+      path: req.path,
+      headers,
+      body: parseBodyForExport(req.body, headers),
+      timestamp: req.timestamp,
+      responseStatus: req.response_status,
+      responseTimeMs: req.response_time_ms,
+      matchedRuleId: req.matched_rule_id,
+      matchedRuleName: req.matched_rule_name,
+      pathParams: req.path_params ? JSON.parse(req.path_params) : null,
+    };
+  });
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

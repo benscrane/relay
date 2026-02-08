@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   processTemplate,
   stripTemplatesForValidation,
+  parseFormBody,
+  isFormUrlEncoded,
+  getContentTypeFromHeaders,
   type TemplateContext,
 } from './template-engine';
 
@@ -238,6 +241,167 @@ describe('processTemplate', () => {
     it('should handle adjacent template variables', () => {
       const ctx = makeContext({ pathParams: { a: 'X', b: 'Y' } });
       expect(processTemplate('{{a}}{{b}}', ctx)).toBe('XY');
+    });
+  });
+});
+
+describe('URL-encoded body support', () => {
+  describe('processTemplate with form-urlencoded body', () => {
+    it('should resolve request.body.field from URL-encoded body', () => {
+      const ctx = makeContext({
+        request: {
+          method: 'POST',
+          path: '/',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          query: {},
+          body: 'name=Alice&age=30',
+        },
+      });
+      expect(processTemplate('{{request.body.name}}', ctx)).toBe('Alice');
+      expect(processTemplate('{{request.body.age}}', ctx)).toBe('30');
+    });
+
+    it('should return empty string for missing form fields', () => {
+      const ctx = makeContext({
+        request: {
+          method: 'POST',
+          path: '/',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          query: {},
+          body: 'name=Alice',
+        },
+      });
+      expect(processTemplate('{{request.body.missing}}', ctx)).toBe('');
+    });
+
+    it('should handle URL-encoded values', () => {
+      const ctx = makeContext({
+        request: {
+          method: 'POST',
+          path: '/',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          query: {},
+          body: 'message=hello+world&url=https%3A%2F%2Fexample.com',
+        },
+      });
+      expect(processTemplate('{{request.body.message}}', ctx)).toBe('hello world');
+      expect(processTemplate('{{request.body.url}}', ctx)).toBe('https://example.com');
+    });
+
+    it('should handle content-type with charset parameter', () => {
+      const ctx = makeContext({
+        request: {
+          method: 'POST',
+          path: '/',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8' },
+          query: {},
+          body: 'key=value',
+        },
+      });
+      expect(processTemplate('{{request.body.key}}', ctx)).toBe('value');
+    });
+
+    it('should handle case-insensitive Content-Type header', () => {
+      const ctx = makeContext({
+        request: {
+          method: 'POST',
+          path: '/',
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+          query: {},
+          body: 'key=value',
+        },
+      });
+      expect(processTemplate('{{request.body.key}}', ctx)).toBe('value');
+    });
+
+    it('should return raw body with request.body for form data', () => {
+      const ctx = makeContext({
+        request: {
+          method: 'POST',
+          path: '/',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          query: {},
+          body: 'name=Alice&age=30',
+        },
+      });
+      expect(processTemplate('{{request.body}}', ctx)).toBe('name=Alice&age=30');
+    });
+
+    it('should return empty string when form body is null', () => {
+      const ctx = makeContext({
+        request: {
+          method: 'POST',
+          path: '/',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          query: {},
+          body: null,
+        },
+      });
+      expect(processTemplate('{{request.body.field}}', ctx)).toBe('');
+    });
+
+    it('should still use JSON parsing when content-type is application/json', () => {
+      const ctx = makeContext({
+        request: {
+          method: 'POST',
+          path: '/',
+          headers: { 'Content-Type': 'application/json' },
+          query: {},
+          body: '{"name": "Alice"}',
+        },
+      });
+      expect(processTemplate('{{request.body.name}}', ctx)).toBe('Alice');
+    });
+  });
+
+  describe('parseFormBody', () => {
+    it('should parse simple form data', () => {
+      expect(parseFormBody('name=Alice&age=30')).toEqual({ name: 'Alice', age: '30' });
+    });
+
+    it('should handle URL-encoded values', () => {
+      expect(parseFormBody('msg=hello+world')).toEqual({ msg: 'hello world' });
+    });
+
+    it('should handle empty string', () => {
+      expect(parseFormBody('')).toEqual({});
+    });
+
+    it('should handle encoded special characters', () => {
+      expect(parseFormBody('q=foo%26bar')).toEqual({ q: 'foo&bar' });
+    });
+  });
+
+  describe('isFormUrlEncoded', () => {
+    it('should return true for form-urlencoded', () => {
+      expect(isFormUrlEncoded('application/x-www-form-urlencoded')).toBe(true);
+    });
+
+    it('should return true with charset parameter', () => {
+      expect(isFormUrlEncoded('application/x-www-form-urlencoded; charset=utf-8')).toBe(true);
+    });
+
+    it('should return false for JSON', () => {
+      expect(isFormUrlEncoded('application/json')).toBe(false);
+    });
+
+    it('should return false for empty string', () => {
+      expect(isFormUrlEncoded('')).toBe(false);
+    });
+  });
+
+  describe('getContentTypeFromHeaders', () => {
+    it('should extract content-type case-insensitively', () => {
+      expect(getContentTypeFromHeaders({ 'Content-Type': 'application/json' })).toBe('application/json');
+      expect(getContentTypeFromHeaders({ 'content-type': 'text/plain' })).toBe('text/plain');
+    });
+
+    it('should strip parameters', () => {
+      expect(getContentTypeFromHeaders({ 'Content-Type': 'text/html; charset=utf-8' })).toBe('text/html');
+    });
+
+    it('should return empty string when missing', () => {
+      expect(getContentTypeFromHeaders({})).toBe('');
     });
   });
 });

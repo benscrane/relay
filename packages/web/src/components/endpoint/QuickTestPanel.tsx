@@ -3,6 +3,8 @@ import { MethodBadge, StatusBadge } from '../common';
 import { JsonViewer } from '../request';
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
+const BODY_FORMATS = ['json', 'form'] as const;
+type BodyFormat = typeof BODY_FORMATS[number];
 
 interface QuickTestPanelProps {
   endpointUrl: string;
@@ -21,10 +23,17 @@ interface HeaderEntry {
   value: string;
 }
 
+interface FormEntry {
+  key: string;
+  value: string;
+}
+
 export function QuickTestPanel({ endpointUrl }: QuickTestPanelProps) {
   const [method, setMethod] = useState<string>('GET');
   const [headers, setHeaders] = useState<HeaderEntry[]>([]);
   const [body, setBody] = useState('');
+  const [bodyFormat, setBodyFormat] = useState<BodyFormat>('json');
+  const [formEntries, setFormEntries] = useState<FormEntry[]>([{ key: '', value: '' }]);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<TestResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +56,18 @@ export function QuickTestPanel({ endpointUrl }: QuickTestPanelProps) {
     setHeaders(prev => prev.filter((_, i) => i !== index));
   }, []);
 
+  const addFormEntry = useCallback(() => {
+    setFormEntries(prev => [...prev, { key: '', value: '' }]);
+  }, []);
+
+  const updateFormEntry = useCallback((index: number, field: 'key' | 'value', val: string) => {
+    setFormEntries(prev => prev.map((e, i) => i === index ? { ...e, [field]: val } : e));
+  }, []);
+
+  const removeFormEntry = useCallback((index: number) => {
+    setFormEntries(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
   const handleSend = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -60,13 +81,32 @@ export function QuickTestPanel({ endpointUrl }: QuickTestPanelProps) {
         }
       }
 
-      if (hasBody && body.trim()) {
-        // Auto-set Content-Type if not manually specified
+      let requestBody: string | undefined;
+
+      if (hasBody) {
         const hasContentType = Object.keys(fetchHeaders).some(
           k => k.toLowerCase() === 'content-type'
         );
-        if (!hasContentType) {
-          fetchHeaders['Content-Type'] = 'application/json';
+
+        if (bodyFormat === 'form') {
+          const params = new URLSearchParams();
+          for (const entry of formEntries) {
+            if (entry.key.trim()) {
+              params.append(entry.key.trim(), entry.value);
+            }
+          }
+          const encoded = params.toString();
+          if (encoded) {
+            requestBody = encoded;
+            if (!hasContentType) {
+              fetchHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
+            }
+          }
+        } else if (body.trim()) {
+          requestBody = body;
+          if (!hasContentType) {
+            fetchHeaders['Content-Type'] = 'application/json';
+          }
         }
       }
 
@@ -74,7 +114,7 @@ export function QuickTestPanel({ endpointUrl }: QuickTestPanelProps) {
       const res = await fetch(endpointUrl, {
         method,
         headers: fetchHeaders,
-        body: hasBody && body.trim() ? body : undefined,
+        body: requestBody,
       });
       const durationMs = Math.round(performance.now() - start);
 
@@ -96,7 +136,7 @@ export function QuickTestPanel({ endpointUrl }: QuickTestPanelProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [endpointUrl, method, headers, body, hasBody]);
+  }, [endpointUrl, method, headers, body, bodyFormat, formEntries, hasBody]);
 
   return (
     <div className="card bg-base-100 shadow-sm">
@@ -194,14 +234,65 @@ export function QuickTestPanel({ endpointUrl }: QuickTestPanelProps) {
         {/* Body editor */}
         {hasBody && showBody && (
           <div className="mt-3">
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder='{"key": "value"}'
-              rows={4}
-              className="textarea textarea-bordered w-full font-mono text-xs"
-              spellCheck={false}
-            />
+            {/* Format tabs */}
+            <div className="tabs tabs-bordered mb-2">
+              <button
+                className={`tab tab-sm ${bodyFormat === 'json' ? 'tab-active' : ''}`}
+                onClick={() => setBodyFormat('json')}
+              >
+                JSON
+              </button>
+              <button
+                className={`tab tab-sm ${bodyFormat === 'form' ? 'tab-active' : ''}`}
+                onClick={() => setBodyFormat('form')}
+              >
+                Form URL-Encoded
+              </button>
+            </div>
+
+            {bodyFormat === 'json' ? (
+              <textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                placeholder='{"key": "value"}'
+                rows={4}
+                className="textarea textarea-bordered w-full font-mono text-xs"
+                spellCheck={false}
+              />
+            ) : (
+              <div className="space-y-2">
+                {formEntries.map((entry, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      placeholder="Key"
+                      value={entry.key}
+                      onChange={(e) => updateFormEntry(index, 'key', e.target.value)}
+                      className="input input-bordered input-xs flex-1 font-mono"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Value"
+                      value={entry.value}
+                      onChange={(e) => updateFormEntry(index, 'value', e.target.value)}
+                      className="input input-bordered input-xs flex-1 font-mono"
+                    />
+                    <button
+                      onClick={() => removeFormEntry(index)}
+                      className="btn btn-ghost btn-xs btn-square"
+                      disabled={formEntries.length === 1}
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+                <button onClick={addFormEntry} className="btn btn-ghost btn-xs">
+                  + Add field
+                </button>
+              </div>
+            )}
           </div>
         )}
 
