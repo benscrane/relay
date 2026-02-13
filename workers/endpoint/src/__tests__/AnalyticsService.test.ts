@@ -123,13 +123,16 @@ describe('AnalyticsService', () => {
       });
     });
 
-    it('should return requestsOverTime mapped as { timestamp, count }[]', () => {
+    it('should return requestsOverTime with all 24 hourly buckets', () => {
       const result = service.getAnalytics('ep_test123');
-      expect(result.requestsOverTime).toEqual([
-        { timestamp: '2025-01-15T10:00:00', count: 5 },
-        { timestamp: '2025-01-15T11:00:00', count: 12 },
-        { timestamp: '2025-01-15T12:00:00', count: 8 },
-      ]);
+      // All 24 hourly buckets should be present even though only 3 had data
+      expect(result.requestsOverTime).toHaveLength(24);
+      // The mock timestamps (2025-01-15) are outside the current 24h window,
+      // so all buckets should be zero-filled
+      for (const entry of result.requestsOverTime) {
+        expect(entry).toHaveProperty('timestamp');
+        expect(entry).toHaveProperty('count');
+      }
     });
 
     it('should return requestsToday and requestsYesterday', () => {
@@ -175,9 +178,12 @@ describe('AnalyticsService', () => {
       expect(result.methods).toEqual({});
     });
 
-    it('should return empty requestsOverTime when no rows', () => {
+    it('should return 24 zero-count buckets for requestsOverTime when no rows', () => {
       const result = service.getAnalytics('ep_empty');
-      expect(result.requestsOverTime).toEqual([]);
+      expect(result.requestsOverTime).toHaveLength(24);
+      for (const entry of result.requestsOverTime) {
+        expect(entry.count).toBe(0);
+      }
     });
 
     it('should default requestsToday to 0 when no rows', () => {

@@ -55,7 +55,7 @@ export class AnalyticsService {
     }
 
     // Requests per hour for last 24 hours
-    const requestsOverTime = this.sql
+    const requestsOverTimeRows = this.sql
       .exec<{ hour: string; count: number }>(
         `SELECT strftime('%Y-%m-%dT%H:00:00', timestamp) as hour, COUNT(*) as count
            FROM request_logs
@@ -64,6 +64,17 @@ export class AnalyticsService {
         endpointId
       )
       .toArray();
+
+    // Build a map of existing counts, then fill all 24 hourly buckets
+    const countsByHour = new Map(requestsOverTimeRows.map(r => [r.hour, r.count]));
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+    const requestsOverTime: { hour: string; count: number }[] = [];
+    for (let i = 23; i >= 0; i--) {
+      const hourDate = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const key = hourDate.toISOString().slice(0, 13) + ':00:00';
+      requestsOverTime.push({ hour: key, count: countsByHour.get(key) ?? 0 });
+    }
 
     // Requests today vs yesterday for trend
     const todayRow = this.sql
