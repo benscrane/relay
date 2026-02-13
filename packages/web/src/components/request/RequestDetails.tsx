@@ -7,9 +7,10 @@ import { CopyButton } from '../common/CopyButton';
 
 interface RequestDetailsProps {
   request: RequestLog;
+  mockBaseUrl?: string;
 }
 
-function buildCurlCommand(request: RequestLog): string {
+function buildCurlCommand(request: RequestLog, mockBaseUrl?: string): string {
   const parts = [`curl -X ${request.method}`];
 
   try {
@@ -32,11 +33,12 @@ function buildCurlCommand(request: RequestLog): string {
     }
   }
 
-  parts.push(`'${request.path}'`);
+  const url = mockBaseUrl ? `${mockBaseUrl}${request.path}` : request.path;
+  parts.push(`'${url}'`);
   return parts.join(' \\\n  ');
 }
 
-export function RequestDetails({ request }: RequestDetailsProps) {
+export function RequestDetails({ request, mockBaseUrl }: RequestDetailsProps) {
   const contentType = useMemo(() => {
     try {
       const headers = JSON.parse(request.headers || '{}');
@@ -49,7 +51,7 @@ export function RequestDetails({ request }: RequestDetailsProps) {
   return (
     <div className="bg-base-200 border-t border-base-200 p-4 space-y-4">
       <div className="flex justify-end">
-        <CopyButton text={buildCurlCommand(request)} label="Copy as cURL" />
+        <CopyButton text={buildCurlCommand(request, mockBaseUrl)} label="Copy as cURL" />
       </div>
       <div>
         <h4 className="text-sm font-semibold text-base-content mb-2">Headers</h4>

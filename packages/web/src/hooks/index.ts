@@ -7,3 +7,5 @@ export { useAuth, AuthProvider } from './useAuth';
 export { useTemplateCreation } from './useTemplateCreation';
 export { useAnalytics } from './useAnalytics';
 export type { EndpointAnalytics } from './useAnalytics';
+export { useRequestReplay } from './useRequestReplay';
+export type { ReplayState, ReplayResponse } from './useRequestReplay';

@@ -5,6 +5,7 @@ import { RequestItem } from './RequestItem';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { CopyButton } from '../common/CopyButton';
 import type { ConnectionStatus } from '../../hooks/useWebSocket';
+import { useRequestReplay } from '../../hooks/useRequestReplay';
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const;
 const STATUS_CATEGORIES = [
@@ -102,10 +103,18 @@ interface RequestListProps {
   status: ConnectionStatus;
   onClear: () => void;
   endpointUrl?: string;
+  mockBaseUrl?: string;
 }
 
-export function RequestList({ requests, status, onClear, endpointUrl }: RequestListProps) {
+export function RequestList({ requests, status, onClear, endpointUrl, mockBaseUrl }: RequestListProps) {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const { replay, getReplayState } = useRequestReplay();
+
+  const handleReplay = useCallback((request: RequestLog) => {
+    if (mockBaseUrl) {
+      replay(request, mockBaseUrl);
+    }
+  }, [replay, mockBaseUrl]);
   const [methodFilter, setMethodFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -418,7 +427,13 @@ export function RequestList({ requests, status, onClear, endpointUrl }: RequestL
           </div>
         ) : (
           filteredRequests.map(request => (
-            <RequestItem key={request.id} request={request} />
+            <RequestItem
+              key={request.id}
+              request={request}
+              mockBaseUrl={mockBaseUrl}
+              replayState={getReplayState(request.id)}
+              onReplay={handleReplay}
+            />
           ))
         )}
       </div>

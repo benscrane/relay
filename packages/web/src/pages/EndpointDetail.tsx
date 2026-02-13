@@ -134,7 +134,8 @@ export function EndpointDetail() {
     );
   }
 
-  const endpointUrl = getMockApiSubdomainUrl(project.subdomain) + endpoint.path;
+  const mockBaseUrl = getMockApiSubdomainUrl(project.subdomain);
+  const endpointUrl = mockBaseUrl + endpoint.path;
 
   const handleUpdateEndpoint = async (data: UpdateEndpointRequest) => {
     if (!projectId || !endpointId) return;
@@ -306,6 +307,7 @@ export function EndpointDetail() {
               status={status}
               onClear={clearRequests}
               endpointUrl={endpointUrl}
+              mockBaseUrl={mockBaseUrl}
             />
           </div>
         </div>
