@@ -1,8 +1,6 @@
 import {
   matchPath,
   normalizePath,
-  generateId,
-  generateRuleId,
   matchRule,
   processTemplate,
   processHeaders,
@@ -20,75 +18,34 @@ import type {
   RequestLog,
 } from '@mockd/shared/types/websocket';
 import type {
-  MockRule,
-  DbMockRule,
   CreateMockRuleRequest,
   UpdateMockRuleRequest,
 } from '@mockd/shared/types/mock-rule';
+import { EndpointStore } from './services/EndpointStore';
+import type { CreateEndpointInput, UpdateEndpointInput } from './services/EndpointStore';
+import { RuleStore } from './services/RuleStore';
+import { RequestLogger } from './services/RequestLogger';
+import { AnalyticsService } from './services/AnalyticsService';
 
 interface DOEnv {
   INTERNAL_API_SECRET: string;
 }
 
-// Headers added by Cloudflare that should be filtered from request logs
-// These are infrastructure headers, not headers sent by the actual client
-const CLOUDFLARE_HEADERS = new Set([
-  'cf-connecting-ip',
-  'cf-ipcountry',
-  'cf-ray',
-  'cf-visitor',
-  'cf-request-id',
-  'cf-warp-tag-id',
-  'cf-ew-via',
-  'cf-pseudo-ipv4',
-  'cf-connecting-ipv6',
-  'x-forwarded-proto',
-  'x-forwarded-for',
-  'x-real-ip',
-  'cdn-loop',
-]);
-
-interface DbEndpoint {
-  [key: string]: string | number | null;
-  id: string;
-  path: string;
-  content_type: string;
-  response_body: string;
-  status_code: number;
-  delay_ms: number;
-  rate_limit: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ApiEndpoint {
-  id: string;
-  projectId: string;
-  path: string;
-  contentType: string;
-  responseBody: string;
-  statusCode: number;
-  delay: number;
-  rateLimit: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface RulesCache {
-  rules: MockRule[];
-  timestamp: number;
-}
-
-const RULES_CACHE_TTL_MS = 60000; // 60 seconds
-
 export class EndpointDO implements DurableObject {
   private sql: SqlStorage;
   private sessions: Map<WebSocket, { endpointId?: string }> = new Map();
-  private rulesCache: Map<string, RulesCache> = new Map();
+  private endpointStore: EndpointStore;
+  private ruleStore: RuleStore;
+  private requestLogger: RequestLogger;
+  private analyticsService: AnalyticsService;
 
   constructor(private state: DurableObjectState, private env: DOEnv) {
     this.sql = state.storage.sql;
     this.initializeSchema();
+    this.endpointStore = new EndpointStore(this.sql);
+    this.ruleStore = new RuleStore(this.sql);
+    this.requestLogger = new RequestLogger(this.sql);
+    this.analyticsService = new AnalyticsService(this.sql);
   }
 
   private validateInternalAuth(request: Request): boolean {
@@ -184,63 +141,6 @@ export class EndpointDO implements DurableObject {
     }
   }
 
-  private getRulesForEndpoint(endpointId: string): MockRule[] {
-    const cached = this.rulesCache.get(endpointId);
-    const now = Date.now();
-
-    if (cached && now - cached.timestamp < RULES_CACHE_TTL_MS) {
-      return cached.rules;
-    }
-
-    const dbRules = this.sql
-      .exec<DbMockRule>('SELECT * FROM mock_rules WHERE endpoint_id = ?', endpointId)
-      .toArray();
-
-    const rules = dbRules.map(this.mapDbRuleToRule);
-
-    this.rulesCache.set(endpointId, { rules, timestamp: now });
-
-    return rules;
-  }
-
-  private invalidateRulesCache(endpointId: string): void {
-    this.rulesCache.delete(endpointId);
-  }
-
-  private mapDbRuleToRule(dbRule: DbMockRule): MockRule {
-    return {
-      id: dbRule.id,
-      endpointId: dbRule.endpoint_id,
-      priority: dbRule.priority,
-      name: dbRule.name,
-      matchMethod: dbRule.match_method,
-      matchPath: dbRule.match_path,
-      matchHeaders: dbRule.match_headers ? JSON.parse(dbRule.match_headers) : null,
-      responseStatus: dbRule.response_status,
-      responseHeaders: dbRule.response_headers ? JSON.parse(dbRule.response_headers) : null,
-      responseBody: dbRule.response_body,
-      responseDelayMs: dbRule.response_delay_ms,
-      isActive: dbRule.is_active === 1,
-      createdAt: dbRule.created_at,
-      updatedAt: dbRule.updated_at,
-    };
-  }
-
-  private mapDbEndpointToEndpoint(dbEndpoint: DbEndpoint, projectId: string = ''): ApiEndpoint {
-    return {
-      id: dbEndpoint.id,
-      projectId,
-      path: dbEndpoint.path,
-      contentType: dbEndpoint.content_type ?? 'application/json',
-      responseBody: dbEndpoint.response_body,
-      statusCode: dbEndpoint.status_code,
-      delay: dbEndpoint.delay_ms,
-      rateLimit: dbEndpoint.rate_limit ?? TIER_LIMITS.free.defaultEndpointRateLimit,
-      createdAt: dbEndpoint.created_at,
-      updatedAt: dbEndpoint.updated_at,
-    };
-  }
-
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
@@ -294,10 +194,7 @@ export class EndpointDO implements DurableObject {
   private async handleInternalRequest(request: Request): Promise<Response> {
     // Validate internal authentication
     if (!this.validateInternalAuth(request)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const url = new URL(request.url);
@@ -305,166 +202,57 @@ export class EndpointDO implements DurableObject {
 
     // GET /__internal/endpoints - List all endpoints
     if (path === '/__internal/endpoints' && request.method === 'GET') {
-      const dbEndpoints = this.sql
-        .exec<DbEndpoint>('SELECT * FROM endpoints ORDER BY created_at DESC')
-        .toArray();
-
-      const endpoints = dbEndpoints.map(e => this.mapDbEndpointToEndpoint(e));
-
-      return new Response(JSON.stringify({ data: endpoints }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json({ data: this.endpointStore.list() });
     }
 
     // POST /__internal/endpoints - Create a new endpoint
     if (path === '/__internal/endpoints' && request.method === 'POST') {
-      const body = await request.json() as { path: string; content_type?: string; response_body?: string; status_code?: number; delay_ms?: number; rate_limit?: number };
+      const body = await request.json() as CreateEndpointInput;
 
       if (!body.path) {
-        return new Response(JSON.stringify({ error: 'path is required' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return Response.json({ error: 'path is required' }, { status: 400 });
       }
 
-      // Check if endpoint with this path already exists
-      const existing = this.sql
-        .exec<DbEndpoint>('SELECT * FROM endpoints WHERE path = ?', body.path)
-        .toArray()[0];
-
-      if (existing) {
-        return new Response(JSON.stringify({ error: 'An endpoint with this path already exists' }), {
-          status: 409,
-          headers: { 'Content-Type': 'application/json' },
-        });
+      const endpoint = this.endpointStore.create(body);
+      if (!endpoint) {
+        return Response.json(
+          { error: 'An endpoint with this path already exists' },
+          { status: 409 }
+        );
       }
 
-      const id = `ep_${generateId()}`;
-      const now = new Date().toISOString();
-
-      this.sql.exec(
-        `INSERT INTO endpoints (id, path, content_type, response_body, status_code, delay_ms, rate_limit, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        id,
-        body.path,
-        body.content_type ?? 'application/json',
-        body.response_body ?? '{}',
-        body.status_code ?? 200,
-        body.delay_ms ?? 0,
-        body.rate_limit ?? TIER_LIMITS.free.defaultEndpointRateLimit,
-        now,
-        now
-      );
-
-      const dbEndpoint = this.sql
-        .exec<DbEndpoint>('SELECT * FROM endpoints WHERE id = ?', id)
-        .toArray()[0];
-
-      return new Response(JSON.stringify({ data: this.mapDbEndpointToEndpoint(dbEndpoint) }), {
-        status: 201,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json({ data: endpoint }, { status: 201 });
     }
 
     // PUT /__internal/endpoints/:id - Update an endpoint
     const endpointUpdateMatch = path.match(/^\/__internal\/endpoints\/([^/]+)$/);
     if (endpointUpdateMatch && request.method === 'PUT') {
       const endpointId = endpointUpdateMatch[1];
-      const body = await request.json() as { content_type?: string; response_body?: string; status_code?: number; delay_ms?: number; rate_limit?: number };
+      const body = await request.json() as UpdateEndpointInput;
 
-      // Check if endpoint exists
-      const existing = this.sql
-        .exec<DbEndpoint>('SELECT * FROM endpoints WHERE id = ?', endpointId)
-        .toArray()[0];
-
-      if (!existing) {
-        return new Response(JSON.stringify({ error: 'Endpoint not found' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        });
+      const endpoint = this.endpointStore.update(endpointId, body);
+      if (!endpoint) {
+        return Response.json({ error: 'Endpoint not found' }, { status: 404 });
       }
 
-      const updates: string[] = [];
-      const params: (string | number)[] = [];
-
-      if (body.content_type !== undefined) {
-        updates.push('content_type = ?');
-        params.push(body.content_type);
-      }
-      if (body.response_body !== undefined) {
-        updates.push('response_body = ?');
-        params.push(body.response_body);
-      }
-      if (body.status_code !== undefined) {
-        updates.push('status_code = ?');
-        params.push(body.status_code);
-      }
-      if (body.delay_ms !== undefined) {
-        updates.push('delay_ms = ?');
-        params.push(body.delay_ms);
-      }
-      if (body.rate_limit !== undefined) {
-        updates.push('rate_limit = ?');
-        params.push(body.rate_limit);
-      }
-
-      if (updates.length > 0) {
-        updates.push("updated_at = datetime('now')");
-        params.push(endpointId);
-
-        this.sql.exec(
-          `UPDATE endpoints SET ${updates.join(', ')} WHERE id = ?`,
-          ...params
-        );
-      }
-
-      const dbEndpoint = this.sql
-        .exec<DbEndpoint>('SELECT * FROM endpoints WHERE id = ?', endpointId)
-        .toArray()[0];
-
-      return new Response(JSON.stringify({ data: this.mapDbEndpointToEndpoint(dbEndpoint) }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json({ data: endpoint });
     }
 
     // DELETE /__internal/endpoints/:id - Delete an endpoint
     const endpointDeleteMatch = path.match(/^\/__internal\/endpoints\/([^/]+)$/);
     if (endpointDeleteMatch && request.method === 'DELETE') {
       const endpointId = endpointDeleteMatch[1];
-
-      this.sql.exec('DELETE FROM endpoints WHERE id = ?', endpointId);
-      this.invalidateRulesCache(endpointId);
-
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      this.endpointStore.delete(endpointId);
+      this.ruleStore.invalidateCache(endpointId);
+      return Response.json({ success: true });
     }
 
     // GET /__internal/logs - Get request history
     if (path === '/__internal/logs' && request.method === 'GET') {
       const limit = parseInt(url.searchParams.get('limit') || '100', 10);
-      const endpointId = url.searchParams.get('endpointId');
-
-      let query = 'SELECT * FROM request_logs';
-      const params: (string | number)[] = [];
-
-      if (endpointId) {
-        query += ' WHERE endpoint_id = ?';
-        params.push(endpointId);
-      }
-
-      query += ' ORDER BY timestamp DESC LIMIT ?';
-      params.push(limit);
-
-      const logs = this.sql.exec<RequestLog>(query, ...params).toArray();
-
-      return new Response(JSON.stringify({ data: logs }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const endpointId = url.searchParams.get('endpointId') || undefined;
+      const logs = this.requestLogger.query({ endpointId, limit });
+      return Response.json({ data: logs });
     }
 
     // GET /__internal/analytics - Get aggregated analytics for an endpoint
@@ -472,109 +260,18 @@ export class EndpointDO implements DurableObject {
       const endpointId = url.searchParams.get('endpointId');
 
       if (!endpointId) {
-        return new Response(JSON.stringify({ error: 'endpointId is required' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return Response.json({ error: 'endpointId is required' }, { status: 400 });
       }
 
-      // Total request count
-      const totalRow = this.sql
-        .exec<{ count: number }>(
-          'SELECT COUNT(*) as count FROM request_logs WHERE endpoint_id = ?',
-          endpointId
-        )
-        .toArray()[0];
-      const totalRequests = totalRow?.count ?? 0;
-
-      // Average response time
-      const avgRow = this.sql
-        .exec<{ avg_time: number | null }>(
-          'SELECT AVG(response_time_ms) as avg_time FROM request_logs WHERE endpoint_id = ? AND response_time_ms IS NOT NULL',
-          endpointId
-        )
-        .toArray()[0];
-      const avgResponseTime = avgRow?.avg_time ? Math.round(avgRow.avg_time) : 0;
-
-      // Status code distribution
-      const statusRows = this.sql
-        .exec<{ response_status: number; count: number }>(
-          'SELECT response_status, COUNT(*) as count FROM request_logs WHERE endpoint_id = ? AND response_status IS NOT NULL GROUP BY response_status ORDER BY count DESC',
-          endpointId
-        )
-        .toArray();
-      const statusCodes: Record<number, number> = {};
-      for (const row of statusRows) {
-        statusCodes[row.response_status] = row.count;
-      }
-
-      // Method distribution
-      const methodRows = this.sql
-        .exec<{ method: string; count: number }>(
-          'SELECT method, COUNT(*) as count FROM request_logs WHERE endpoint_id = ? GROUP BY method ORDER BY count DESC',
-          endpointId
-        )
-        .toArray();
-      const methods: Record<string, number> = {};
-      for (const row of methodRows) {
-        methods[row.method] = row.count;
-      }
-
-      // Requests per hour for last 24 hours
-      const requestsOverTime = this.sql
-        .exec<{ hour: string; count: number }>(
-          `SELECT strftime('%Y-%m-%dT%H:00:00', timestamp) as hour, COUNT(*) as count
-           FROM request_logs
-           WHERE endpoint_id = ? AND timestamp >= datetime('now', '-24 hours')
-           GROUP BY hour ORDER BY hour ASC`,
-          endpointId
-        )
-        .toArray();
-
-      // Requests today vs yesterday for trend
-      const todayRow = this.sql
-        .exec<{ count: number }>(
-          `SELECT COUNT(*) as count FROM request_logs WHERE endpoint_id = ? AND timestamp >= datetime('now', 'start of day')`,
-          endpointId
-        )
-        .toArray()[0];
-      const yesterdayRow = this.sql
-        .exec<{ count: number }>(
-          `SELECT COUNT(*) as count FROM request_logs WHERE endpoint_id = ? AND timestamp >= datetime('now', '-1 day', 'start of day') AND timestamp < datetime('now', 'start of day')`,
-          endpointId
-        )
-        .toArray()[0];
-
-      const analytics = {
-        totalRequests,
-        avgResponseTime,
-        statusCodes,
-        methods,
-        requestsOverTime: requestsOverTime.map(r => ({ timestamp: r.hour, count: r.count })),
-        requestsToday: todayRow?.count ?? 0,
-        requestsYesterday: yesterdayRow?.count ?? 0,
-      };
-
-      return new Response(JSON.stringify({ data: analytics }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const analytics = this.analyticsService.getAnalytics(endpointId);
+      return Response.json({ data: analytics });
     }
 
     // DELETE /__internal/logs - Clear request history
     if (path === '/__internal/logs' && request.method === 'DELETE') {
-      const endpointId = url.searchParams.get('endpointId');
-
-      if (endpointId) {
-        this.sql.exec('DELETE FROM request_logs WHERE endpoint_id = ?', endpointId);
-      } else {
-        this.sql.exec('DELETE FROM request_logs');
-      }
-
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const endpointId = url.searchParams.get('endpointId') || undefined;
+      this.requestLogger.clear(endpointId);
+      return Response.json({ success: true });
     }
 
     // GET /__internal/rules - List rules for an endpoint
@@ -582,18 +279,11 @@ export class EndpointDO implements DurableObject {
       const endpointId = url.searchParams.get('endpointId');
 
       if (!endpointId) {
-        return new Response(JSON.stringify({ error: 'endpointId is required' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return Response.json({ error: 'endpointId is required' }, { status: 400 });
       }
 
-      const rules = this.getRulesForEndpoint(endpointId);
-
-      return new Response(JSON.stringify({ data: rules }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const rules = this.ruleStore.listForEndpoint(endpointId);
+      return Response.json({ data: rules });
     }
 
     // POST /__internal/rules - Create a new rule
@@ -601,48 +291,11 @@ export class EndpointDO implements DurableObject {
       const body = await request.json() as CreateMockRuleRequest;
 
       if (!body.endpointId) {
-        return new Response(JSON.stringify({ error: 'endpointId is required' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return Response.json({ error: 'endpointId is required' }, { status: 400 });
       }
 
-      const id = generateRuleId();
-      const now = new Date().toISOString();
-
-      this.sql.exec(
-        `INSERT INTO mock_rules (
-          id, endpoint_id, priority, name, match_method, match_path, match_headers,
-          response_status, response_headers, response_body, response_delay_ms, is_active,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        id,
-        body.endpointId,
-        body.priority ?? 0,
-        body.name ?? null,
-        body.matchMethod ?? null,
-        body.matchPath ?? null,
-        body.matchHeaders ? JSON.stringify(body.matchHeaders) : null,
-        body.responseStatus ?? 200,
-        body.responseHeaders ? JSON.stringify(body.responseHeaders) : null,
-        body.responseBody,
-        body.responseDelayMs ?? 0,
-        body.isActive !== false ? 1 : 0,
-        now,
-        now
-      );
-
-      this.invalidateRulesCache(body.endpointId);
-
-      const dbRule = this.sql
-        .exec<DbMockRule>('SELECT * FROM mock_rules WHERE id = ?', id)
-        .toArray()[0];
-      const rule = this.mapDbRuleToRule(dbRule);
-
-      return new Response(JSON.stringify({ data: rule }), {
-        status: 201,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const rule = this.ruleStore.create(body);
+      return Response.json({ data: rule }, { status: 201 });
     }
 
     // PUT /__internal/rules/:id - Update a rule
@@ -651,83 +304,12 @@ export class EndpointDO implements DurableObject {
       const ruleId = rulesUpdateMatch[1];
       const body = await request.json() as UpdateMockRuleRequest;
 
-      // Get current rule to get endpoint_id for cache invalidation
-      const existingRule = this.sql
-        .exec<DbMockRule>('SELECT * FROM mock_rules WHERE id = ?', ruleId)
-        .toArray()[0];
-
-      if (!existingRule) {
-        return new Response(JSON.stringify({ error: 'Rule not found' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        });
+      const rule = this.ruleStore.update(ruleId, body);
+      if (!rule) {
+        return Response.json({ error: 'Rule not found' }, { status: 404 });
       }
 
-      const updates: string[] = [];
-      const params: (string | number | null)[] = [];
-
-      if (body.priority !== undefined) {
-        updates.push('priority = ?');
-        params.push(body.priority);
-      }
-      if (body.name !== undefined) {
-        updates.push('name = ?');
-        params.push(body.name);
-      }
-      if (body.matchMethod !== undefined) {
-        updates.push('match_method = ?');
-        params.push(body.matchMethod);
-      }
-      if (body.matchPath !== undefined) {
-        updates.push('match_path = ?');
-        params.push(body.matchPath);
-      }
-      if (body.matchHeaders !== undefined) {
-        updates.push('match_headers = ?');
-        params.push(body.matchHeaders ? JSON.stringify(body.matchHeaders) : null);
-      }
-      if (body.responseStatus !== undefined) {
-        updates.push('response_status = ?');
-        params.push(body.responseStatus);
-      }
-      if (body.responseHeaders !== undefined) {
-        updates.push('response_headers = ?');
-        params.push(body.responseHeaders ? JSON.stringify(body.responseHeaders) : null);
-      }
-      if (body.responseBody !== undefined) {
-        updates.push('response_body = ?');
-        params.push(body.responseBody);
-      }
-      if (body.responseDelayMs !== undefined) {
-        updates.push('response_delay_ms = ?');
-        params.push(body.responseDelayMs);
-      }
-      if (body.isActive !== undefined) {
-        updates.push('is_active = ?');
-        params.push(body.isActive ? 1 : 0);
-      }
-
-      if (updates.length > 0) {
-        updates.push("updated_at = datetime('now')");
-        params.push(ruleId);
-
-        this.sql.exec(
-          `UPDATE mock_rules SET ${updates.join(', ')} WHERE id = ?`,
-          ...params
-        );
-
-        this.invalidateRulesCache(existingRule.endpoint_id);
-      }
-
-      const updatedRule = this.sql
-        .exec<DbMockRule>('SELECT * FROM mock_rules WHERE id = ?', ruleId)
-        .toArray()[0];
-      const rule = this.mapDbRuleToRule(updatedRule);
-
-      return new Response(JSON.stringify({ data: rule }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json({ data: rule });
     }
 
     // DELETE /__internal/rules/:id - Delete a rule
@@ -735,25 +317,12 @@ export class EndpointDO implements DurableObject {
     if (rulesDeleteMatch && request.method === 'DELETE') {
       const ruleId = rulesDeleteMatch[1];
 
-      // Get rule to get endpoint_id for cache invalidation
-      const existingRule = this.sql
-        .exec<DbMockRule>('SELECT * FROM mock_rules WHERE id = ?', ruleId)
-        .toArray()[0];
-
-      if (!existingRule) {
-        return new Response(JSON.stringify({ error: 'Rule not found' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        });
+      const endpointId = this.ruleStore.delete(ruleId);
+      if (endpointId === null) {
+        return Response.json({ error: 'Rule not found' }, { status: 404 });
       }
 
-      this.sql.exec('DELETE FROM mock_rules WHERE id = ?', ruleId);
-      this.invalidateRulesCache(existingRule.endpoint_id);
-
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json({ success: true });
     }
 
     // PUT /__internal/config - Update project config (e.g., max request size based on tier)
@@ -769,30 +338,21 @@ export class EndpointDO implements DurableObject {
         await this.state.storage.put('config:maxRequestSize', body.maxRequestSize);
       }
 
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json({ success: true });
     }
 
     // GET /__internal/config - Get project config
     if (path === '/__internal/config' && request.method === 'GET') {
       const maxRequestSize = await this.state.storage.get<number>('config:maxRequestSize');
 
-      return new Response(JSON.stringify({
+      return Response.json({
         data: {
           maxRequestSize: maxRequestSize ?? TIER_LIMITS.free.maxRequestSize,
         },
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    return new Response(JSON.stringify({ error: 'Not found' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return Response.json({ error: 'Not found' }, { status: 404 });
   }
 
   /**
@@ -806,21 +366,7 @@ export class EndpointDO implements DurableObject {
     const key = getWindowKey(endpointId, RATE_LIMIT_WINDOW_MS);
     const count = (await this.state.storage.get<number>(key)) ?? 0;
 
-    console.log('[RateLimit] Check:', {
-      endpointId,
-      key,
-      currentCount: count,
-      limit,
-      windowMs: RATE_LIMIT_WINDOW_MS,
-    });
-
     if (count >= limit) {
-      console.log('[RateLimit] BLOCKED:', {
-        endpointId,
-        count,
-        limit,
-        reason: 'count >= limit',
-      });
       return { allowed: false, count };
     }
 
@@ -830,14 +376,6 @@ export class EndpointDO implements DurableObject {
     await this.state.storage.put(key, count + 1, {
       expirationTtl: ttlSeconds,
     } as DurableObjectPutOptions);
-
-    console.log('[RateLimit] ALLOWED:', {
-      endpointId,
-      newCount: count + 1,
-      limit,
-      remaining: limit - (count + 1),
-      ttlSeconds,
-    });
 
     return { allowed: true, count: count + 1 };
   }
@@ -887,16 +425,14 @@ export class EndpointDO implements DurableObject {
     });
 
     // Find matching endpoint (match on path only, not method)
-    const endpoints = this.sql
-      .exec<DbEndpoint>('SELECT * FROM endpoints ORDER BY created_at ASC')
-      .toArray();
+    const endpoints = this.endpointStore.listForMatching();
 
     // Sort endpoints by specificity (more specific paths first)
     const sortedEndpoints = [...endpoints].sort((a, b) =>
       calculatePathSpecificity(b.path) - calculatePathSpecificity(a.path)
     );
 
-    let matchedEndpoint: DbEndpoint | undefined;
+    let matchedEndpoint: typeof endpoints[0] | undefined;
     let endpointPathParams: Record<string, string> = {};
     for (const endpoint of sortedEndpoints) {
       const match = matchPath(endpoint.path, path);
@@ -917,25 +453,9 @@ export class EndpointDO implements DurableObject {
     // Check rate limit
     const rateLimit = matchedEndpoint.rate_limit ?? TIER_LIMITS.free.defaultEndpointRateLimit;
 
-    console.log('[RateLimit] Request:', {
-      requestPath: path,
-      method,
-      endpointId: matchedEndpoint.id,
-      endpointPath: matchedEndpoint.path,
-      configuredRateLimit: matchedEndpoint.rate_limit,
-      effectiveRateLimit: rateLimit,
-      rateLimitSource: matchedEndpoint.rate_limit !== null ? 'endpoint' : 'tier_default',
-    });
-
     const { allowed, count } = await this.checkRateLimit(matchedEndpoint.id, rateLimit);
 
     if (!allowed) {
-      console.log('[RateLimit] Returning 429:', {
-        endpointId: matchedEndpoint.id,
-        path,
-        count,
-        limit: rateLimit,
-      });
       const rateLimitData = getRateLimitExceededData(rateLimit, RATE_LIMIT_WINDOW_MS);
       return new Response(rateLimitData.body, {
         status: rateLimitData.status,
@@ -950,7 +470,7 @@ export class EndpointDO implements DurableObject {
     });
 
     // Get rules for this endpoint and try to match
-    const rules = this.getRulesForEndpoint(matchedEndpoint.id);
+    const rules = this.ruleStore.listForEndpoint(matchedEndpoint.id);
     const requestContext: RequestContext = { method, path, headers: headersObj };
     const ruleMatch = matchRule(rules, requestContext, endpointPathParams);
 
@@ -1004,18 +524,18 @@ export class EndpointDO implements DurableObject {
     const responseTimeMs = Math.round(performance.now() - startTime);
 
     // Log the request with rule info and response data
-    const requestLog = await this.logRequest(
-      matchedEndpoint.id,
+    const requestLog = this.requestLogger.log({
+      endpointId: matchedEndpoint.id,
       method,
       path,
-      request.headers,
+      headers: request.headers,
       body,
       matchedRuleId,
       matchedRuleName,
       pathParams,
       responseStatus,
-      responseTimeMs
-    );
+      responseTimeMs,
+    });
 
     // Broadcast to connected WebSocket clients
     this.broadcastRequest(requestLog);
@@ -1029,67 +549,6 @@ export class EndpointDO implements DurableObject {
       status: responseStatus,
       headers: responseHeaders,
     });
-  }
-
-  private async logRequest(
-    endpointId: string,
-    method: string,
-    path: string,
-    headers: Headers,
-    body: string | null,
-    matchedRuleId: string | null = null,
-    matchedRuleName: string | null = null,
-    pathParams: Record<string, string> | null = null,
-    responseStatus: number | null = null,
-    responseTimeMs: number | null = null
-  ): Promise<RequestLog> {
-    const id = `req_${generateId()}`;
-    const timestamp = new Date().toISOString();
-
-    // Convert headers to JSON, filtering out Cloudflare infrastructure headers
-    const headersObj: Record<string, string> = {};
-    headers.forEach((value, key) => {
-      if (!CLOUDFLARE_HEADERS.has(key.toLowerCase())) {
-        headersObj[key] = value;
-      }
-    });
-    const headersJson = JSON.stringify(headersObj);
-    const pathParamsJson = pathParams && Object.keys(pathParams).length > 0
-      ? JSON.stringify(pathParams)
-      : null;
-
-    // Insert into database
-    this.sql.exec(
-      `INSERT INTO request_logs (id, endpoint_id, method, path, headers, body, timestamp, matched_rule_id, matched_rule_name, path_params, response_status, response_time_ms)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      id,
-      endpointId,
-      method,
-      path,
-      headersJson,
-      body,
-      timestamp,
-      matchedRuleId,
-      matchedRuleName,
-      pathParamsJson,
-      responseStatus,
-      responseTimeMs
-    );
-
-    return {
-      id,
-      endpoint_id: endpointId,
-      method,
-      path,
-      headers: headersJson,
-      body,
-      timestamp,
-      matched_rule_id: matchedRuleId,
-      matched_rule_name: matchedRuleName,
-      path_params: pathParamsJson,
-      response_status: responseStatus,
-      response_time_ms: responseTimeMs,
-    };
   }
 
   private broadcastRequest(requestLog: RequestLog): void {
@@ -1151,17 +610,7 @@ export class EndpointDO implements DurableObject {
   }
 
   private handleGetHistory(ws: WebSocket, endpointId?: string): void {
-    let query = 'SELECT * FROM request_logs';
-    const params: string[] = [];
-
-    if (endpointId) {
-      query += ' WHERE endpoint_id = ?';
-      params.push(endpointId);
-    }
-
-    query += ' ORDER BY timestamp DESC LIMIT 100';
-
-    const logs = this.sql.exec<RequestLog>(query, ...params).toArray();
+    const logs = this.requestLogger.query({ endpointId, limit: 100 });
 
     const response: ServerMessage = {
       type: 'history',
